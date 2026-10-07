@@ -1,0 +1,28 @@
+{
+  "name": "le-wassa-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "API Express du maquis-restaurant Le WASSA",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "start:dev": "node --watch index.js",
+    "backup": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/backup-db.ps1 -IntervalHours 24",
+    "migrate:sqlite": "node ./scripts/migrate-to-sqlite.js",
+    "smoke": "node ./scripts/smoke-test.js"
+  },
+  "author": "",
+  "engines": {
+    "node": ">=20.17.0"
+  },
+  "dependencies": {
+    "axios": "^1.4.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.0",
+    "express": "^4.18.2",
+    "pg": "^8.23.1",
+    "qrcode": "^1.5.4",
+    "sqlite": "^4.1.2",
+    "sqlite3": "^6.0.1"
+  }
+}

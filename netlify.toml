@@ -1,0 +1,14 @@
+[build]
+  publish = "dist"
+  command = "npm run build:netlify"
+  functions = "netlify/functions"
+
+[context.production.environment]
+  NODE_ENV = "production"
+
+[[redirects]]
+  from = "/api/gemini/generate"
+  to = "/.netlify/functions/gemini-generate"
+  status = 200
+  force = true
+  methods = ["POST", "OPTIONS"]

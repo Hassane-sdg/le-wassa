@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Admin - Réservations</title>
+  <style>body{font-family:Arial,Helvetica,sans-serif;padding:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:8px}th{background:#f4f4f4}</style>
+</head>
+<body>
+  <h1>Admin - Réservations</h1>
+  <p>Entrez le token admin pour voir/supprimer les réservations.</p>
+  <input id="token" placeholder="Token admin" style="width:60%" />
+  <button id="load">Charger</button>
+  <div id="status" style="margin-top:10px;color:#555"></div>
+  <table id="list" style="margin-top:10px;display:none">
+    <thead><tr><th>id</th><th>Nom</th><th>Date</th><th>Party</th><th>Note</th><th>Action</th></tr></thead>
+    <tbody></tbody>
+  </table>
+  <script>
+    const loadBtn = document.getElementById('load');
+    const tokenInput = document.getElementById('token');
+    const status = document.getElementById('status');
+    const listTable = document.getElementById('list');
+    const tbody = listTable.querySelector('tbody');
+
+    function setStatus(msg) { status.textContent = msg }
+
+    async function load() {
+      setStatus('Chargement...');
+      tbody.innerHTML = '';
+      const token = tokenInput.value.trim();
+      if (!token) { setStatus('Token requis'); return }
+      try {
+        const res = await fetch('/api/reservations', { headers: { 'Authorization':'Bearer '+token }});
+        const data = await res.json();
+        if (!data.ok) { setStatus('Erreur: '+(data.error||JSON.stringify(data))); return }
+        setStatus('Chargé '+data.data.length+' réservations');
+        listTable.style.display = '';
+        for (const r of data.data) {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td>${r.id}</td><td>${escapeHtml(r.name)}</td><td>${r.date}</td><td>${r.party}</td><td>${escapeHtml(r.note)}</td><td><button data-id="${r.id}">Supprimer</button></td>`;
+          tbody.appendChild(tr);
+        }
+      } catch (e) { setStatus('Fetch error: '+e.message) }
+    }
+
+    function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"})[c]) }
+
+    loadBtn.addEventListener('click', load);
+    tbody.addEventListener('click', async (e) => {
+      if (e.target.tagName === 'BUTTON') {
+        const id = e.target.getAttribute('data-id');
+        const token = tokenInput.value.trim();
+        if (!confirm('Supprimer la réservation '+id+' ?')) return;
+        try {
+          const res = await fetch('/api/reservations/'+id, { method: 'DELETE', headers: { 'Authorization':'Bearer '+token }});
+          const data = await res.json();
+          if (data.ok) { setStatus('Supprimé '+id); load(); } else { setStatus('Erreur: '+(data.error||JSON.stringify(data))); }
+        } catch (err) { setStatus('Erreur suppression: '+err.message) }
+      }
+    });
+  </script>
+</body>
+</html>

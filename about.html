@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Le WASSA, un maquis-resto pour savourer les grillades, la cuisine africaine et les bons moments entre proches.">
+    <meta name="theme-color" content="#121212">
+    <title>À propos | Le WASSA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <header id="header">
+        <div class="logo">
+            <img src="images/bar.png" alt="Logo du Chic Wassa">
+            <h1>Le WASSA</h1>
+        </div>
+        <nav id="nav">
+            <ul>
+                <li><a href="acceuil.html" title="Page d'accueil">Accueil</a></li>
+                <li><a href="about.html" title="À propos" class="active">À propos</a></li>
+                <li><a href="menu.html" title="Consulter le menu">Menu</a></li>
+                <li><a href="events.html" title="Voir les événements">Événements</a></li>
+                <li><a href="team.html" title="Rencontrer l'équipe">Notre Équipe</a></li>
+                <li><a href="reservation.html" title="Réserver une table">Réservation</a></li>
+                <li><a href="admin-login.html" class="admin-link" title="Se connecter au tableau de bord">Admin</a></li>
+            </ul>
+        </nav>
+        <button class="menu-toggle" id="menu-toggle" type="button" aria-label="Ouvrir le menu" aria-controls="nav" aria-expanded="false">
+            <i class="fas fa-bars"></i>
+        </button>
+    </header>
+
+    <!-- About Section -->
+    <section class="section" id="about">
+        <div class="section-title">
+            <h2>Notre Histoire</h2>
+            <p>Découvrez ce qui fait de nous une référence en matière de cuisine africaine</p>
+        </div>
+        <div class="about-content">
+            <div class="about-text">
+                <h3>La cuisine se partage</h3>
+                <p>Le WASSA réunit l’esprit du maquis et le confort d’une belle table : on s’y retrouve pour manger, discuter et prendre le temps.</p>
+                <p>Au menu, des grillades, des accompagnements généreux et des boissons à partager. Les recettes, les produits et les disponibilités sont précisés directement dans notre menu.</p>
+                <p>Notre ambition est simple : vous accueillir avec chaleur, servir sans complication et faire de chaque visite un bon souvenir.</p>
+            </div>
+            <div class="about-image">
+                <img src="images/grillade.png" alt="Notre Restaurant">
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer (uniform) -->
+    <footer>
+        <div class="footer-container">
+            <div class="footer-col">
+                <h3>Élégance Chic</h3>
+                <p>Maquis-resto premium — cuisine africaine réinventée dans une ambiance élégante.</p>
+                <div class="footer-social-links">
+                    <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                    <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                </div>
+            </div>
+            <div class="footer-col">
+                <h3>Liens</h3>
+                <ul class="footer-links">
+                    <li><a href="acceuil.html">Accueil</a></li>
+                    <li><a href="about.html">À propos</a></li>
+                    <li><a href="menu.html">Menu</a></li>
+                    <li><a href="events.html">Événements</a></li>
+                    <li><a href="team.html">Équipe</a></li>
+                    <li><a href="reservation.html">Réservation</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h3>Contact</h3>
+                <div class="footer-contact-item"><i class="fas fa-map-marker-alt"></i><span>Rue des Gourmets, Plateau, Abidjan</span></div>
+                <div class="footer-contact-item"><i class="fas fa-phone-alt"></i><span>+225 01 02 03 04 05</span></div>
+                <div class="footer-contact-item"><i class="fas fa-envelope"></i><span>contact@elegancechic.com</span></div>
+            </div>
+        </div>
+        <div class="footer-bottom"><p>&copy; 2025 Élégance Chic. Tous droits réservés.</p></div>
+    </footer>
+
+            <!-- Global loader (honeycomb) -->
+            <div id="global-loader">
+                <div class="honeycomb" aria-hidden="true"><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+            </div>
+        <script src="restaurant-config.js"></script>
+        <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Admin | Élégance Chic</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #c19a6b;
+            --secondary: #1a1a1a;
+            --light: #f5f5f5;
+            --dark: #121212;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        body {
+            display: flex;
+            background-color: #f0f2f5;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            background: var(--secondary);
+            color: var(--light);
+            height: 100vh;
+            position: fixed;
+            padding: 20px 0;
+            transition: all 0.3s;
+        }
+
+        .sidebar-header {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid rgba(193, 154, 107, 0.2);
+        }
+
+        .sidebar-header h3 {
+            color: var(--primary);
+        }
+
+        .sidebar-menu {
+            padding: 20px 0;
+        }
+
+        .sidebar-menu li {
+            list-style: none;
+            margin-bottom: 5px;
+        }
+
+        .sidebar-menu a {
+            display: block;
+            padding: 12px 20px;
+            color: var(--light);
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .sidebar-menu a:hover, .sidebar-menu a.active {
+            background: rgba(193, 154, 107, 0.2);
+            border-left: 3px solid var(--primary);
+        }
+
+        .sidebar-menu i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 250px;
+            width: calc(100% - 250px);
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .card-header h3 {
+            color: var(--secondary);
+        }
+
+        .card-body {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .tables {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background: var(--secondary);
+            color: white;
+        }
+
+        tr:hover {
+            background: #f5f5f5;
+        }
+
+        .btn {
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-danger {
+            background: #f44336;
+            color: white;
+        }
+
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .dashboard-message {
+            margin: 12px 0;
+            padding: 12px 14px;
+            border-radius: 4px;
+            color: #513c24;
+            background: #f6ead9;
+            font-size: 14px;
+        }
+
+        .dashboard-message.error {
+            color: #842029;
+            background: #f8d7da;
+        }
+
+        .dashboard-message.success {
+            color: #0f5132;
+            background: #d1e7dd;
+        }
+
+        .admin-connection,
+        .table-form {
+            display: flex;
+            align-items: end;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .admin-connection .form-group,
+        .table-form .form-group {
+            flex: 1 1 180px;
+            margin-bottom: 0;
+        }
+
+        .dashboard-section {
+            margin-bottom: 22px;
+        }
+
+        .dashboard-section .card-header {
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .order-items {
+            min-width: 190px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .status-control,
+        .table-status {
+            min-width: 145px;
+            padding: 7px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .muted {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .product-form {
+            padding: 14px;
+            margin-top: 12px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            background: #fffdfa;
+        }
+
+        .product-form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+        }
+
+        .product-description-field {
+            grid-column: 1 / -1;
+        }
+
+        .product-form-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        button:disabled {
+            cursor: wait;
+            opacity: 0.65;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 80px;
+            }
+            .sidebar-menu span {
+                display: none;
+            }
+            .sidebar-menu i {
+                margin-right: 0;
+                font-size: 1.2rem;
+            }
+            .main-content {
+                margin-left: 80px;
+                width: calc(100% - 80px);
+            }
+            .cards {
+                grid-template-columns: 1fr;
+            }
+            .main-content {
+                padding: 12px;
+            }
+            .header {
+                padding: 12px;
+            }
+            th, td {
+                padding: 9px;
+                font-size: 13px;
+            }
+        }
+    </style>
+</head>
+<body class="dashboard-page">
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h3>Le WASSA</h3>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="dashboard.html" class="active"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></a></li>
+            <li><a href="#dashboard-orders"><i class="fas fa-shopping-basket"></i><span>Commandes</span></a></li>
+            <li><a href="#menu-management"><i class="fas fa-utensils"></i><span>Menu</span></a></li>
+            <li><a href="#tables-management"><i class="fas fa-chair"></i><span>Tables & QR</span></a></li>
+            <li><a href="#reservations-management"><i class="fas fa-bookmark"></i><span>Réservations</span></a></li>
+            <li><a href="events.html"><i class="fas fa-calendar-alt"></i><span>Événements</span></a></li>
+            <li><a href="acceuil.html"><i class="fas fa-home"></i><span>Site public</span></a></li>
+        </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="header">
+            <h2>Tableau de Bord</h2>
+            <div class="user-area">
+                <span>Admin</span>
+                <i class="fas fa-user-circle user-icon"></i>
+            </div>
+        </div>
+
+        <div class="card dashboard-section">
+            <div class="card-header">
+                <h3>Connexion à l’API d’administration</h3>
+                <button id="refresh-dashboard" class="btn btn-primary" type="button">Actualiser</button>
+            </div>
+            <p class="muted">Saisissez le jeton administrateur défini côté serveur (ADMIN_TOKEN). Il reste dans cette session de navigateur.</p>
+            <form id="admin-token-form" class="admin-connection">
+                <div class="form-group">
+                    <label for="admin-token">Jeton administrateur</label>
+                    <input id="admin-token" class="form-control" type="password" autocomplete="current-password" required>
+                </div>
+                <button class="btn btn-primary" type="submit">Se connecter</button>
+                <button id="admin-logout" class="btn" type="button">Déconnexion</button>
+            </form>
+            <div id="dashboard-message" class="dashboard-message" role="status" aria-live="polite">Connexion à l’API en attente.</div>
+        </div>
+
+        <div id="dashboard-summary" class="cards">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Commandes</h3>
+                    <i class="fas fa-shopping-basket icon-primary"></i>
+                </div>
+                <div id="orders-count" class="card-body">—</div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <h3>En attente</h3>
+                    <i class="fas fa-hourglass-half icon-primary"></i>
+                </div>
+                <div id="pending-count" class="card-body">—</div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <h3>Total des commandes</h3>
+                    <i class="fas fa-money-bill-wave icon-primary"></i>
+                </div>
+                <div id="revenue-total" class="card-body">—</div>
+            </div>
+        </div>
+
+        <section class="card dashboard-section" id="dashboard-orders">
+            <div class="card-header">
+                <h3>Commandes récentes</h3>
+                <span class="muted">Mise à jour automatique toutes les 20 secondes</span>
+            </div>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Commande</th>
+                            <th>Table</th>
+                            <th>Client</th>
+                            <th>Articles</th>
+                            <th>Total</th>
+                            <th>Statut</th>
+                            <th>Reçue le</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dashboard-orders-list">
+                        <tr><td colspan="7">Connectez-vous pour charger les commandes.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="card dashboard-section" id="tables-management">
+            <div class="card-header">
+                <h3>Gestion des tables</h3>
+            </div>
+            <form id="table-create-form" class="table-form">
+                <div class="form-group">
+                    <label for="new-table-id">Identifiant</label>
+                    <input id="new-table-id" class="form-control" maxlength="20" placeholder="06" required>
+                </div>
+                <div class="form-group">
+                    <label for="new-table-label">Nom affiché</label>
+                    <input id="new-table-label" class="form-control" maxlength="60" placeholder="Table 06">
+                </div>
+                <button class="btn btn-primary" type="submit">Ajouter une table</button>
+            </form>
+            <div class="table-responsive" style="margin-top:18px">
+                <table>
+                    <thead>
+                        <tr><th>Identifiant</th><th>Nom</th><th>État</th><th>QR / lien</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody id="dashboard-tables-list">
+                        <tr><td colspan="5">Connectez-vous pour charger les tables.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="card dashboard-section" id="reservations-management" aria-labelledby="reservations-heading">
+            <div class="card-header">
+                <h3 id="reservations-heading">Demandes de réservation</h3>
+                <span class="muted">Confirmez les demandes auprès du client avant de bloquer une table.</span>
+            </div>
+            <div class="table-responsive">
+                <table>
+                    <thead><tr><th>Client</th><th>Date demandée</th><th>Personnes</th><th>Contact / note</th><th>Action</th></tr></thead>
+                    <tbody id="dashboard-reservations-list">
+                        <tr><td colspan="5">Connectez-vous pour charger les réservations.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="card dashboard-section" id="menu-management" aria-labelledby="products-heading">
+            <div class="card-header">
+                <h3 id="products-heading">Gestion du menu</h3>
+                <span class="muted">Les prix sont en FCFA. Les produits indisponibles restent masqués du menu client.</span>
+            </div>
+            <form id="product-form" class="product-form">
+                <input id="product-id" type="hidden">
+                <div class="product-form-grid">
+                    <div class="form-group">
+                        <label for="product-name">Nom du produit</label>
+                        <input id="product-name" class="form-control" maxlength="100" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="product-category">Catégorie</label>
+                        <input id="product-category" class="form-control" maxlength="50" placeholder="Grillades" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="product-price">Prix (FCFA)</label>
+                        <input id="product-price" class="form-control" type="number" min="1" max="100000000" step="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="product-badge">Mention</label>
+                        <input id="product-badge" class="form-control" maxlength="40" placeholder="Spécialité">
+                    </div>
+                    <div class="form-group">
+                        <label for="product-image">Image (chemin local ou URL HTTPS)</label>
+                        <input id="product-image" class="form-control" maxlength="500" value="images/profil.png">
+                    </div>
+                    <div class="form-group">
+                        <label for="product-available">Disponibilité</label>
+                        <select id="product-available" class="form-control">
+                            <option value="true">Disponible</option>
+                            <option value="false">Indisponible</option>
+                        </select>
+                    </div>
+                    <div class="form-group product-description-field">
+                        <label for="product-description">Description</label>
+                        <textarea id="product-description" class="form-control" maxlength="400" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="product-form-actions">
+                    <button class="btn btn-primary" type="submit">Enregistrer le produit</button>
+                    <button id="cancel-product-edit" class="btn" type="button" hidden>Annuler la modification</button>
+                </div>
+            </form>
+            <div class="table-responsive" style="margin-top:18px">
+                <table>
+                    <thead><tr><th>Produit</th><th>Catégorie</th><th>Prix</th><th>État</th><th>Actions</th></tr></thead>
+                    <tbody id="dashboard-products-list">
+                        <tr><td colspan="5">Connectez-vous pour charger le menu.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </div>
+
+    <script src="restaurant-config.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const apiBase = (window.WASSA_CONFIG && window.WASSA_CONFIG.apiBaseUrl) || window.WASSA_API_URL ||
+                ((location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+                    ? 'http://localhost:5173'
+                    : location.origin);
+            const statusOptions = [
+                ['PENDING', 'En attente'],
+                ['CONFIRMED', 'Confirmée'],
+                ['PREPARING', 'En préparation'],
+                ['READY', 'Prête'],
+                ['SERVED', 'Servie'],
+                ['COMPLETED', 'Terminée'],
+                ['CANCELLED', 'Annulée']
+            ];
+            const tokenInput = document.getElementById('admin-token');
+            const message = document.getElementById('dashboard-message');
+            const ordersBody = document.getElementById('dashboard-orders-list');
+            const tablesBody = document.getElementById('dashboard-tables-list');
+            const productsBody = document.getElementById('dashboard-products-list');
+            const reservationsBody = document.getElementById('dashboard-reservations-list');
+            const productForm = document.getElementById('product-form');
+            let orders = [];
+            let tables = [];
+            let products = [];
+            let reservations = [];
+
+            const restaurantName = (window.WASSA_CONFIG && window.WASSA_CONFIG.name) || 'Le WASSA';
+            document.querySelector('.sidebar-header h3').textContent = restaurantName;
+            document.title = document.title.replace(/Élégance Chic/g, restaurantName);
+
+            const clearDashboardData = () => {
+                orders = [];
+                tables = [];
+                products = [];
+                reservations = [];
+                ordersBody.innerHTML = '<tr><td colspan="7">Connectez-vous pour charger les commandes.</td></tr>';
+                tablesBody.innerHTML = '<tr><td colspan="5">Connectez-vous pour charger les tables.</td></tr>';
+                productsBody.innerHTML = '<tr><td colspan="5">Connectez-vous pour charger le menu.</td></tr>';
+                reservationsBody.innerHTML = '<tr><td colspan="5">Connectez-vous pour charger les réservations.</td></tr>';
+                document.getElementById('orders-count').textContent = '—';
+                document.getElementById('pending-count').textContent = '—';
+                document.getElementById('revenue-total').textContent = '—';
+            };
+
+            const escapeHtml = value => String(value == null ? '' : value).replace(/[&<>"']/g, char => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            })[char]);
+            const formatPrice = value => `${Number(value || 0).toLocaleString('fr-FR')} FCFA`;
+            const showMessage = (text, type = '') => {
+                message.textContent = text;
+                message.className = `dashboard-message${type ? ` ${type}` : ''}`;
+            };
+            const request = async (path, options = {}) => {
+                const token = sessionStorage.getItem('wassa_admin_token') || '';
+                const response = await fetch(`${apiBase}${path}`, {
+                    ...options,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                        ...(options.headers || {})
+                    }
+                });
+                let result = {};
+                try {
+                    result = await response.json();
+                } catch (error) {
+                    throw new Error('Réponse invalide du serveur.');
+                }
+                if (!response.ok || result.ok === false) {
+                    if (response.status === 401) {
+                        sessionStorage.removeItem('wassa_admin_token');
+                    }
+                    throw new Error(result.error || `Erreur serveur (${response.status}).`);
+                }
+                return result.data;
+            };
+
+            const renderOrders = () => {
+                if (!orders.length) {
+                    ordersBody.innerHTML = '<tr><td colspan="7">Aucune commande enregistrée.</td></tr>';
+                    return;
+                }
+                ordersBody.innerHTML = orders.map(order => {
+                    const items = Array.isArray(order.items) ? order.items.map(item =>
+                        `${escapeHtml(item.productName || item.name || item.productId)} × ${Number(item.quantity || 0)}`
+                    ).join('<br>') : '—';
+                    const options = statusOptions.map(([value, label]) =>
+                        `<option value="${value}"${value === order.status ? ' selected' : ''}>${label}</option>`
+                    ).join('');
+                    const receivedAt = order.createdAt ? new Date(order.createdAt).toLocaleString('fr-FR') : '—';
+                    return `<tr>
+                        <td>${escapeHtml(order.id)}</td>
+                        <td>${escapeHtml(order.tableId || order.table || '—')}</td>
+                        <td>${escapeHtml(order.customerName || order.customer || 'Client')}</td>
+                        <td class="order-items">${items}${order.note ? `<br><em>Note : ${escapeHtml(order.note)}</em>` : ''}</td>
+                        <td>${formatPrice(order.total)}</td>
+                        <td><select class="status-control" data-order-status="${escapeHtml(order.id)}" aria-label="Statut de la commande ${escapeHtml(order.id)}">${options}</select></td>
+                        <td>${escapeHtml(receivedAt)}</td>
+                    </tr>`;
+                }).join('');
+            };
+
+            const renderTables = () => {
+                if (!tables.length) {
+                    tablesBody.innerHTML = '<tr><td colspan="5">Aucune table. Ajoutez-en une ci-dessus.</td></tr>';
+                    return;
+                }
+                tablesBody.innerHTML = tables.map(table => {
+                    const id = escapeHtml(table.id);
+                    const status = String(table.status || 'available');
+                    const baseUrl = (window.WASSA_CONFIG && window.WASSA_CONFIG.publicUrl) || `${location.origin}${location.pathname.replace(/[^/]*$/, '')}`;
+                    const link = new URL(`table.html?table=${encodeURIComponent(table.id)}`, `${baseUrl.replace(/\/$/, '')}/`).toString();
+                    return `<tr data-table-row="${id}">
+                        <td>${id}</td>
+                        <td><input class="form-control" data-table-label="${id}" maxlength="60" value="${escapeHtml(table.label)}" aria-label="Nom de la table ${id}"></td>
+                        <td><select class="table-status" data-table-status="${id}" aria-label="État de la table ${id}">
+                            <option value="available"${status === 'available' ? ' selected' : ''}>Disponible</option>
+                            <option value="occupied"${status === 'occupied' ? ' selected' : ''}>Occupée</option>
+                            <option value="maintenance"${status === 'maintenance' ? ' selected' : ''}>Indisponible</option>
+                        </select></td>
+                        <td><a href="${escapeHtml(link)}" target="_blank" rel="noopener">Ouvrir le menu</a></td>
+                        <td class="table-actions">
+                            <button class="btn btn-primary btn-sm" type="button" data-download-qr="${id}">Télécharger QR</button>
+                            <button class="btn btn-primary btn-sm" type="button" data-save-table="${id}">Enregistrer</button>
+                            <button class="btn btn-danger btn-sm" type="button" data-delete-table="${id}">Supprimer</button>
+                        </td>
+                    </tr>`;
+                }).join('');
+            };
+
+            const renderProducts = () => {
+                if (!products.length) {
+                    productsBody.innerHTML = '<tr><td colspan="5">Aucun produit. Ajoutez-en avec le formulaire ci-dessus.</td></tr>';
+                    return;
+                }
+                productsBody.innerHTML = products.map(product => {
+                    const id = escapeHtml(product.id);
+                    return `<tr>
+                        <td><strong>${escapeHtml(product.name)}</strong><br><span class="muted">${escapeHtml(product.description || '')}</span></td>
+                        <td>${escapeHtml(product.category)}</td>
+                        <td>${formatPrice(product.price)}</td>
+                        <td>${product.available ? 'Disponible' : 'Indisponible'}</td>
+                        <td class="table-actions">
+                            <button class="btn btn-primary btn-sm" type="button" data-edit-product="${id}">Modifier</button>
+                            <button class="btn btn-danger btn-sm" type="button" data-delete-product="${id}">Supprimer</button>
+                        </td>
+                    </tr>`;
+                }).join('');
+            };
+
+            const renderReservations = () => {
+                if (!reservations.length) {
+                    reservationsBody.innerHTML = '<tr><td colspan="5">Aucune demande de réservation.</td></tr>';
+                    return;
+                }
+                reservationsBody.innerHTML = reservations.map(item => {
+                    const date = item.date ? new Date(item.date).toLocaleString('fr-FR') : '—';
+                    const contact = [item.phone, item.email].filter(Boolean).map(escapeHtml).join('<br>');
+                    const details = [item.event, item.note].filter(Boolean).map(escapeHtml).join(' · ');
+                    return `<tr>
+                        <td>${escapeHtml(item.name)}</td>
+                        <td>${escapeHtml(date)}</td>
+                        <td>${Number(item.party || 0)}</td>
+                        <td>${contact || '—'}${details ? `<br><span class="muted">${details}</span>` : ''}</td>
+                        <td><button class="btn btn-danger btn-sm" type="button" data-delete-reservation="${Number(item.id)}">Supprimer</button></td>
+                    </tr>`;
+                }).join('');
+            };
+
+            const loadDashboard = async () => {
+                showMessage('Chargement des commandes, tables, réservations et menu…');
+                try {
+                    const [orderData, tableData, productData, reservationData] = await Promise.all([
+                        request('/api/orders'),
+                        request('/api/tables'),
+                        request('/api/admin/menu'),
+                        request('/api/reservations')
+                    ]);
+                    orders = Array.isArray(orderData) ? orderData : [];
+                    tables = Array.isArray(tableData) ? tableData : [];
+                    products = Array.isArray(productData) ? productData : [];
+                    reservations = Array.isArray(reservationData) ? reservationData : [];
+                    renderOrders();
+                    renderTables();
+                    renderProducts();
+                    renderReservations();
+                    document.getElementById('orders-count').textContent = orders.length;
+                    document.getElementById('pending-count').textContent = orders.filter(order =>
+                        ['PENDING', 'CONFIRMED'].includes(order.status)
+                    ).length;
+                    document.getElementById('revenue-total').textContent = formatPrice(
+                        orders.filter(order => order.status !== 'CANCELLED')
+                            .reduce((sum, order) => sum + Number(order.total || 0), 0)
+                    );
+                    showMessage(`Données synchronisées · ${orders.length} commande(s) · ${tables.length} table(s) · ${reservations.length} réservation(s) · ${products.length} produit(s).`, 'success');
+                } catch (error) {
+                    clearDashboardData();
+                    showMessage(`${error.message} Vérifiez ADMIN_TOKEN et la disponibilité de l’API.`, 'error');
+                }
+            };
+
+            tokenInput.value = sessionStorage.getItem('wassa_admin_token') || '';
+            document.getElementById('admin-token-form').addEventListener('submit', async event => {
+                event.preventDefault();
+                const token = tokenInput.value.trim();
+                if (!token) return;
+                sessionStorage.setItem('wassa_admin_token', token);
+                await loadDashboard();
+            });
+
+            document.getElementById('admin-logout').addEventListener('click', () => {
+                sessionStorage.removeItem('wassa_admin_token');
+                tokenInput.value = '';
+                clearDashboardData();
+                showMessage('Jeton effacé de cette session.');
+            });
+
+            document.getElementById('refresh-dashboard').addEventListener('click', loadDashboard);
+            document.getElementById('table-create-form').addEventListener('submit', async event => {
+                event.preventDefault();
+                const id = document.getElementById('new-table-id').value.trim();
+                const label = document.getElementById('new-table-label').value.trim() || `Table ${id}`;
+                try {
+                    await request('/api/tables', {
+                        method: 'POST',
+                        body: JSON.stringify({ id, label, status: 'available' })
+                    });
+                    event.target.reset();
+                    await loadDashboard();
+                } catch (error) {
+                    showMessage(error.message, 'error');
+                }
+            });
+
+            productForm.addEventListener('submit', async event => {
+                event.preventDefault();
+                const existingId = document.getElementById('product-id').value.trim();
+                const name = document.getElementById('product-name').value.trim();
+                const payload = {
+                    id: existingId || name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
+                    name,
+                    category: document.getElementById('product-category').value.trim(),
+                    price: Number(document.getElementById('product-price').value),
+                    badge: document.getElementById('product-badge').value.trim(),
+                    image: document.getElementById('product-image').value.trim(),
+                    description: document.getElementById('product-description').value.trim(),
+                    available: document.getElementById('product-available').value === 'true'
+                };
+                try {
+                    await request(existingId ? `/api/menu/${encodeURIComponent(existingId)}` : '/api/menu', {
+                        method: existingId ? 'PUT' : 'POST',
+                        body: JSON.stringify(payload)
+                    });
+                    productForm.reset();
+                    document.getElementById('product-id').value = '';
+                    document.getElementById('product-image').value = 'images/profil.png';
+                    document.getElementById('cancel-product-edit').hidden = true;
+                    await loadDashboard();
+                    showMessage('Produit enregistré dans le menu.', 'success');
+                } catch (error) {
+                    showMessage(error.message, 'error');
+                }
+            });
+
+            document.getElementById('cancel-product-edit').addEventListener('click', () => {
+                productForm.reset();
+                document.getElementById('product-id').value = '';
+                document.getElementById('product-image').value = 'images/profil.png';
+                document.getElementById('cancel-product-edit').hidden = true;
+            });
+
+            productsBody.addEventListener('click', async event => {
+                const editButton = event.target.closest('[data-edit-product]');
+                const deleteButton = event.target.closest('[data-delete-product]');
+                if (editButton) {
+                    const product = products.find(item => item.id === editButton.dataset.editProduct);
+                    if (!product) return;
+                    document.getElementById('product-id').value = product.id;
+                    document.getElementById('product-name').value = product.name;
+                    document.getElementById('product-category').value = product.category;
+                    document.getElementById('product-price').value = product.price;
+                    document.getElementById('product-badge').value = product.badge || '';
+                    document.getElementById('product-image').value = product.image || 'images/profil.png';
+                    document.getElementById('product-description').value = product.description || '';
+                    document.getElementById('product-available').value = product.available ? 'true' : 'false';
+                    document.getElementById('cancel-product-edit').hidden = false;
+                    document.getElementById('product-name').focus();
+                    return;
+                }
+                if (deleteButton) {
+                    const id = deleteButton.dataset.deleteProduct;
+                    if (!window.confirm(`Supprimer le produit ${id} du menu ?`)) return;
+                    try {
+                        await request(`/api/menu/${encodeURIComponent(id)}`, { method: 'DELETE' });
+                        await loadDashboard();
+                        showMessage('Produit supprimé du menu.', 'success');
+                    } catch (error) {
+                        showMessage(error.message, 'error');
+                    }
+                }
+            });
+
+            document.addEventListener('change', async event => {
+                const selector = event.target.closest('[data-order-status]');
+                if (!selector) return;
+                selector.disabled = true;
+                try {
+                    await request(`/api/orders/${encodeURIComponent(selector.dataset.orderStatus)}/status`, {
+                        method: 'PUT',
+                        body: JSON.stringify({ status: selector.value })
+                    });
+                    await loadDashboard();
+                } catch (error) {
+                    showMessage(error.message, 'error');
+                    await loadDashboard();
+                }
+            });
+
+            document.addEventListener('click', async event => {
+                const saveButton = event.target.closest('[data-save-table]');
+                const deleteButton = event.target.closest('[data-delete-table]');
+                const qrButton = event.target.closest('[data-download-qr]');
+                const deleteReservationButton = event.target.closest('[data-delete-reservation]');
+                try {
+                    if (deleteReservationButton) {
+                        const id = deleteReservationButton.dataset.deleteReservation;
+                        if (!window.confirm(`Supprimer la demande de réservation ${id} ?`)) return;
+                        await request(`/api/reservations/${encodeURIComponent(id)}`, { method: 'DELETE' });
+                        await loadDashboard();
+                    } else if (qrButton) {
+                        const id = qrButton.dataset.downloadQr;
+                        const token = sessionStorage.getItem('wassa_admin_token') || '';
+                        const response = await fetch(`${apiBase}/api/tables/${encodeURIComponent(id)}/qr`, {
+                            headers: { Authorization: `Bearer ${token}` }
+                        });
+                        if (!response.ok) {
+                            let result = {};
+                            try { result = await response.json(); } catch (error) { throw new Error('Réponse invalide du serveur QR.'); }
+                            throw new Error(result.error || `Erreur serveur (${response.status}).`);
+                        }
+                        const objectUrl = URL.createObjectURL(await response.blob());
+                        const download = document.createElement('a');
+                        download.href = objectUrl;
+                        download.download = `table-${id}.png`;
+                        download.click();
+                        URL.revokeObjectURL(objectUrl);
+                    } else if (saveButton) {
+                        const id = saveButton.dataset.saveTable;
+                        const label = document.querySelector(`[data-table-label="${CSS.escape(id)}"]`).value.trim();
+                        const status = document.querySelector(`[data-table-status="${CSS.escape(id)}"]`).value;
+                        await request(`/api/tables/${encodeURIComponent(id)}`, {
+                            method: 'PUT',
+                            body: JSON.stringify({ label, status })
+                        });
+                        showMessage(`Table ${id} mise à jour.`, 'success');
+                        await loadDashboard();
+                    } else if (deleteButton) {
+                        const id = deleteButton.dataset.deleteTable;
+                        if (!window.confirm(`Supprimer la table ${id} ?`)) return;
+                        await request(`/api/tables/${encodeURIComponent(id)}`, { method: 'DELETE' });
+                        await loadDashboard();
+                    }
+                } catch (error) {
+                    showMessage(error.message, 'error');
+                }
+            });
+
+            if (sessionStorage.getItem('wassa_admin_token')) loadDashboard();
+            window.setInterval(() => {
+                const editingAdminData = document.activeElement &&
+                    document.activeElement.closest('#table-create-form, #dashboard-tables-list, #dashboard-orders-list');
+                if (sessionStorage.getItem('wassa_admin_token') && !editingAdminData) loadDashboard();
+            }, 20000);
+        });
+    </script>
+</body>
+</html>

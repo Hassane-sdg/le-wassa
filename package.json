@@ -1,0 +1,25 @@
+{
+  "name": "le-wassa-restaurant",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Site web et parcours de commande du maquis-restaurant Le WASSA",
+  "scripts": {
+    "start": "npm run build:netlify && serve dist -l 5000",
+    "build:js": "npx terser script.js -o script.min.js --compress --mangle",
+    "build": "npm run build:netlify",
+    "build:netlify": "node scripts/build-netlify.js",
+    "test:netlify-build": "node scripts/verify-netlify-build.js",
+    "prepare-fa": "echo \"Run 'npm install @fortawesome/fontawesome-free' to install FontAwesome locally\""
+  },
+  "keywords": ["restaurant", "website", "static"],
+  "engines": {
+    "node": ">=20.17.0"
+  },
+  "devDependencies": {
+    "serve": "^14.2.4",
+    "terser": "^5.51.2"
+  },
+  "overrides": {
+    "compression": "1.8.2"
+  }
+}

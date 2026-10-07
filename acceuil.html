@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Le WASSA, maquis-resto et cuisine africaine. Découvrez le menu, les événements et commandez depuis votre table.">
+    <meta name="theme-color" content="#121212">
+    <meta property="og:title" content="Le WASSA — Maquis-resto">
+    <meta property="og:description" content="Cuisine africaine, ambiance conviviale et commande simple depuis votre table.">
+    <title>Le WASSA — Maquis-resto</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+    <header id="header">
+        <div class="logo">
+            <img src="images/bar.png" alt="Logo">
+            <h1>Le WASSA</h1>
+        </div>
+        <nav id="nav">
+            <ul>
+                <li><a href="acceuil.html" class="active" title="Page d'accueil">Accueil</a></li>
+                <li><a href="about.html" title="À propos">À propos</a></li>
+                <li><a href="menu.html" title="Consulter le menu">Menu</a></li>
+                <li><a href="events.html" title="Voir les événements">Événements</a></li>
+                <li><a href="reservation.html" title="Réserver une table">Réservation</a></li>
+                <li><a href="team.html" title="Rencontrer l'équipe">Équipe</a></li>
+                <!-- admin déclencheur : on ouvre le modal au lieu de naviguer -->
+                <li><a href="admin-login.html" id="admin-link" class="admin-link" title="Se connecter au tableau de bord">Admin</a></li>
+            </ul>
+        </nav>
+        <button class="menu-toggle" id="menu-toggle" type="button" aria-label="Ouvrir le menu" aria-controls="nav" aria-expanded="false"><i class="fas fa-bars"></i></button>
+    </header>
+
+    <!-- Hero -->
+    <section class="hero" id="home">
+        <div class="hero-content">
+            <h2>L'Excellence Culinaire Africaine</h2>
+            <p>Bienvenue chez Le WASSA. Découvrez les spécialités, l’ambiance et les rendez-vous du maquis.</p>
+            <div class="hero-cta">
+                <a class="btn btn-primary" href="menu.html">Voir le menu</a>
+                <a class="btn btn-secondary" href="table.html?table=01">Commander à table</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Simple overview linking to pages -->
+    <section class="section overview">
+        <div class="section-title">
+            <h2>Découvrir</h2>
+            <p>Accès rapide aux sections principales du site</p>
+        </div>
+        <div class="overview-container">
+            <div class="card"><h3>À propos</h3><p>Notre histoire et notre mission.</p><a href="about.html" class="link">En savoir</a></div>
+            <div class="card"><h3>Menu</h3><p>Nos plats signature.</p><a href="menu.html" class="link">Voir</a></div>
+            <div class="card"><h3>Événements</h3><p>Soirées et réservations privées.</p><a href="events.html" class="link">Voir</a></div>
+            <div class="card"><h3>Réservation</h3><p>Réservez votre table rapidement.</p><a href="reservation.html" class="link">Réserver</a></div>
+        </div>
+    </section>
+
+    <section class="section tonight-section">
+        <div class="section-title">
+            <h2>Ce soir au maquis</h2>
+            <p>Ambiance, musique, matchs et offres spéciales</p>
+        </div>
+        <div class="tonight-grid">
+            <div class="Tonight-card">
+                <span class="eyebrow">Musique</span>
+                <h3>Les sons du maquis</h3>
+                <p>Une ambiance chaleureuse, des rythmes africains et une belle table à partager.</p>
+            </div>
+            <div class="Tonight-card">
+                <span class="eyebrow">Rendez-vous</span>
+                <h3>Soirées & grands matchs</h3>
+                <p>Retrouvez ici le programme confirmé par l’équipe avant votre visite.</p>
+            </div>
+            <div class="Tonight-card">
+                <span class="eyebrow">À partager</span>
+                <h3>Le WASSA, entre amis</h3>
+                <p>Invitez votre groupe, partagez le menu et profitez du moment ensemble.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="section loyalty-section">
+        <div class="section-title">
+            <h2>Fidélité client</h2>
+            <p>Des points après les commandes terminées, sans inscription compliquée.</p>
+        </div>
+        <div class="loyalty-box">
+            <div>
+                <span class="eyebrow">Votre statut</span>
+                <h3>Club WASSA</h3>
+            </div>
+            <div class="points-wrap">
+                <strong id="loyalty-points">0 points</strong>
+                <small>Demandez à l’équipe de rattacher votre numéro pour cumuler vos points.</small>
+            </div>
+        </div>
+    </section>
+
+    <!-- Minimal footer kept for styling -->
+    <!-- Map / Localisation -->
+    <section class="section map-section">
+        <div class="section-title">
+            <h2>Nous Trouver</h2>
+            <p>Retrouvez l’adresse et l’itinéraire du maquis.</p>
+        </div>
+        <div class="map-container">
+            <div class="map-card">
+                <p id="restaurant-address" class="location-address">Adresse à renseigner dans restaurant-config.js.</p>
+                <iframe id="restaurant-map" class="map-embed" title="Carte du maquis" loading="lazy" hidden></iframe>
+                <div class="map-actions">
+                    <a id="directions-link" href="#" target="_blank" rel="noopener" hidden>Ouvrir l’itinéraire</a>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Footer (uniform) -->
+    <footer>
+        <div class="footer-container">
+            <div class="footer-col">
+                <h3>Le WASSA</h3>
+                <p>Maquis-resto premium — cuisine africaine réinventée dans une ambiance élégante.</p>
+                <div class="footer-social-links">
+                    <a id="share-whatsapp" href="#" aria-label="Partager sur WhatsApp" hidden><i class="fab fa-whatsapp"></i></a>
+                    <a id="social-facebook" href="#" aria-label="Facebook" hidden><i class="fab fa-facebook-f"></i></a>
+                    <a id="social-instagram" href="#" aria-label="Instagram" hidden><i class="fab fa-instagram"></i></a>
+                    <a id="social-tiktok" href="#" aria-label="TikTok" hidden><i class="fab fa-tiktok"></i></a>
+                </div>
+            </div>
+            <div class="footer-col">
+                <h3>Liens</h3>
+                <ul class="footer-links">
+                    <li><a href="acceuil.html">Accueil</a></li>
+                    <li><a href="about.html">À propos</a></li>
+                    <li><a href="menu.html">Menu</a></li>
+                    <li><a href="events.html">Événements</a></li>
+                    <li><a href="reservation.html">Réservation</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h3>Contact</h3>
+                <div class="footer-contact-item" id="footer-email-wrap" hidden><i class="fas fa-envelope"></i><a id="footer-email"></a></div>
+                <div class="footer-contact-item" id="footer-phone-wrap" hidden><i class="fas fa-phone-alt"></i><a id="footer-phone"></a></div>
+            </div>
+        </div>
+        <div class="footer-bottom"><p>&copy; 2025 Élégance Chic. Tous droits réservés.</p></div>
+    </footer>
+
+    <div class="scroll-top" id="scroll-top"><i class="fas fa-arrow-up"></i></div>
+        <!-- Global loader (honeycomb) -->
+        <div id="global-loader">
+            <div class="honeycomb" aria-hidden="true"><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+        </div>
+        <script src="restaurant-config.js"></script>
+        <script src="script.js"></script>
+</body>
+</html>

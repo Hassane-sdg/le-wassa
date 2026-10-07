@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Consultez les grillades, spécialités et boissons du maquis Le WASSA, puis envoyez votre commande.">
+    <meta name="theme-color" content="#121212">
+    <title>Menu et commande | Le WASSA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+    <header id="header">
+        <div class="logo">
+            <img src="images/bar.png" alt="Logo du Chic Wassa">
+            <h1>Le WASSA</h1>
+        </div>
+        <nav id="nav">
+            <ul>
+                <li><a href="acceuil.html" title="Page d'accueil">Accueil</a></li>
+                <li><a href="about.html" title="À propos">À propos</a></li>
+                <li><a href="menu.html" class="active" title="Consulter le menu">Menu</a></li>
+                <li><a href="events.html" title="Voir les événements">Événements</a></li>
+                <li><a href="reservation.html" title="Réserver une table">Réservation</a></li>
+                <li><a href="team.html" title="Rencontrer l'équipe">Équipe</a></li>
+                <li><a href="admin-login.html" class="admin-link" title="Se connecter au tableau de bord">Admin</a></li>
+            </ul>
+        </nav>
+        <button class="menu-toggle" id="menu-toggle" type="button" aria-label="Ouvrir le menu" aria-controls="nav" aria-expanded="false">
+            <i class="fas fa-bars"></i>
+        </button>
+    </header>
+    <!-- Menu Section -->
+    <section class="section" id="menu">
+        <div class="section-title">
+            <h2>Notre Menu</h2>
+            <p>Découvrez les spécialités, les prix et commandez en quelques gestes.</p>
+            <p id="table-order-context" class="table-order-context">Commande à emporter ou à table · paiement sur place.</p>
+        </div>
+        <div class="form-group table-order-picker" id="table-order-picker" hidden>
+            <label for="order-table-id">Votre table</label>
+            <select id="order-table-id" class="form-control">
+                <option value="">Choisir une table…</option>
+            </select>
+        </div>
+
+        <div class="menu-filters" aria-label="Filtres du menu">
+            <button class="filter-btn active" data-category="all">Tout</button>
+            <button class="filter-btn" data-category="Grillades">Grillades</button>
+            <button class="filter-btn" data-category="Accompagnements">Accompagnements</button>
+            <button class="filter-btn" data-category="Boissons">Boissons</button>
+            <button class="filter-btn" data-category="Desserts">Desserts</button>
+        </div>
+
+        <div id="menu-grid" class="menu-container"></div>
+
+        <aside class="floating-cart compact" id="floating-cart">
+            <div class="cart-summary-header">
+                <h3>Mon panier</h3>
+                <span id="cart-count">0 article</span>
+            </div>
+            <div id="cart-items" class="cart-items"></div>
+            <div class="cart-summary-line">
+                <span>Total</span>
+                <strong id="cart-total">0 FCFA</strong>
+            </div>
+            <p class="payment-note">Paiement sur place auprès du personnel. Le paiement en ligne n’est pas encore disponible.</p>
+            <div class="form-group">
+                <label for="order-customer-name">Votre prénom (facultatif)</label>
+                <input id="order-customer-name" class="form-control" maxlength="100" autocomplete="given-name">
+            </div>
+            <div class="form-group">
+                <label for="order-customer-phone">Téléphone pour le suivi / la fidélité (facultatif)</label>
+                <input id="order-customer-phone" class="form-control" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="+226 …">
+            </div>
+            <div class="cart-notes-wrap">
+                <label for="order-note">Note spéciale</label>
+                <textarea id="order-note" rows="3" maxlength="500" placeholder="Mettre peu de piment..."></textarea>
+            </div>
+            <div id="order-status" class="order-status" role="status" aria-live="polite"></div>
+            <button id="confirm-order-btn" class="btn btn-primary full-width" type="button">Envoyer la commande</button>
+        </aside>
+        <a id="cart-quick-link" class="cart-quick-link" href="#floating-cart" hidden></a>
+    </section>
+
+    <!-- Footer (uniform) -->
+    <footer>
+        <div class="footer-container">
+            <div class="footer-col">
+                <h3>Élégance Chic</h3>
+                <p>Maquis-resto premium — cuisine africaine réinventée dans une ambiance élégante.</p>
+                <div class="footer-social-links">
+                    <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                    <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                </div>
+            </div>
+            <div class="footer-col">
+                <h3>Liens</h3>
+                <ul class="footer-links">
+                    <li><a href="acceuil.html">Accueil</a></li>
+                    <li><a href="about.html">À propos</a></li>
+                    <li><a href="menu.html">Menu</a></li>
+                    <li><a href="events.html">Événements</a></li>
+                    <li><a href="team.html">Équipe</a></li>
+                    <li><a href="reservation.html">Réservation</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h3>Contact</h3>
+                <div class="footer-contact-item"><i class="fas fa-map-marker-alt"></i><span>Rue des Gourmets, Plateau, Abidjan</span></div>
+                <div class="footer-contact-item"><i class="fas fa-phone-alt"></i><span>+225 01 02 03 04 05</span></div>
+                <div class="footer-contact-item"><i class="fas fa-envelope"></i><span>contact@elegancechic.com</span></div>
+            </div>
+        </div>
+        <div class="footer-bottom"><p>&copy; 2025 Élégance Chic. Tous droits réservés.</p></div>
+    </footer>
+
+    <!-- Scroll to Top -->
+    <div class="scroll-top" id="scroll-top" role="button" tabindex="0" aria-label="Retour en haut">
+        <i class="fas fa-arrow-up"></i>
+    </div>
+
+    <div id="global-loader">
+        <div class="honeycomb" aria-hidden="true"><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+    </div>
+    <script src="restaurant-config.js"></script>
+    <script src="script.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#121212">
+    <title>Commander depuis votre table | Le WASSA</title>
+    <meta name="description" content="Commandez depuis votre table au maquis Le WASSA. Menu, panier, commande et fidélité en quelques secondes.">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <header id="header">
+        <div class="logo">
+            <img src="images/bar.png" alt="Logo du maquis Le WASSA">
+            <h1>Le WASSA</h1>
+        </div>
+        <nav id="nav">
+            <ul>
+                <li><a href="acceuil.html" title="Accueil">Accueil</a></li>
+                <li><a href="about.html" title="À propos">À propos</a></li>
+                <li><a href="menu.html" title="Menu">Menu</a></li>
+                <li><a href="events.html" title="Événements">Événements</a></li>
+                <li><a href="reservation.html" title="Réservation">Réservation</a></li>
+                <li><a href="admin-login.html" class="admin-link" title="Administration">Admin</a></li>
+            </ul>
+        </nav>
+        <button class="menu-toggle" id="menu-toggle" type="button" aria-label="Ouvrir le menu" aria-controls="nav" aria-expanded="false"><i class="fas fa-bars"></i></button>
+    </header>
+
+    <main class="section table-order-page">
+        <div class="section-title">
+            <h2>Commander depuis votre table</h2>
+            <p>Table active · service rapide · paiement sur place</p>
+        </div>
+
+        <div class="table-header-card" id="table-context-card">
+            <div>
+                <span class="eyebrow">Table</span>
+                <h3 id="table-label">Table 01</h3>
+            </div>
+            <div class="form-group table-order-picker" id="table-order-picker" hidden>
+                <label for="order-table-id">Choisissez votre table</label>
+                <select id="order-table-id" class="form-control">
+                    <option value="">Choisir une table…</option>
+                </select>
+            </div>
+            <p class="payment-note table-payment-note">Paiement sur place auprès du personnel · aucun paiement en ligne n’est traité.</p>
+            <div class="pill success">Service actif</div>
+        </div>
+
+        <div class="menu-filters" aria-label="Filtres du menu">
+            <button class="filter-btn active" data-category="all">Tout</button>
+            <button class="filter-btn" data-category="Grillades">Grillades</button>
+            <button class="filter-btn" data-category="Accompagnements">Accompagnements</button>
+            <button class="filter-btn" data-category="Boissons">Boissons</button>
+            <button class="filter-btn" data-category="Desserts">Desserts</button>
+        </div>
+
+        <div id="menu-grid" class="menu-container"></div>
+    </main>
+
+    <aside class="floating-cart" id="floating-cart">
+        <div class="cart-summary-header">
+            <h3>Mon panier</h3>
+            <span id="cart-count">0 article</span>
+        </div>
+        <div id="cart-items" class="cart-items"></div>
+        <div class="cart-summary-line">
+            <span>Total</span>
+            <strong id="cart-total">0 FCFA</strong>
+        </div>
+        <div class="cart-notes-wrap">
+            <label for="order-note">Note spéciale</label>
+            <textarea id="order-note" rows="3" placeholder="Mettre peu de piment, sans oignon..."></textarea>
+        </div>
+        <div class="form-group">
+            <label for="order-customer-name">Votre prénom (facultatif)</label>
+            <input id="order-customer-name" class="form-control" maxlength="100" autocomplete="given-name">
+        </div>
+        <div class="form-group">
+            <label for="order-customer-phone">Téléphone pour le suivi / la fidélité (facultatif)</label>
+            <input id="order-customer-phone" class="form-control" type="tel" inputmode="tel" autocomplete="tel" maxlength="20">
+        </div>
+        <button id="confirm-order-btn" class="btn btn-primary full-width" type="button">Envoyer la commande</button>
+        <div id="order-status" class="order-status" role="status" aria-live="polite"></div>
+    </aside>
+    <a id="cart-quick-link" class="cart-quick-link" href="#floating-cart" hidden></a>
+
+    <footer>
+        <div class="footer-container">
+            <div class="footer-col">
+                <h3>Le WASSA</h3>
+                <p>Maquis premium, cuisine africaine, ambiance conviviale et service rapide.</p>
+            </div>
+            <div class="footer-col">
+                <h3>Liens</h3>
+                <ul class="footer-links">
+                    <li><a href="acceuil.html">Accueil</a></li>
+                    <li><a href="menu.html">Menu</a></li>
+                    <li><a href="reservation.html">Réservation</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h3>Contact</h3>
+                <div class="footer-contact-item"><i class="fas fa-phone-alt"></i><span>+225 01 02 03 04 05</span></div>
+                <div class="footer-contact-item"><i class="fas fa-map-marker-alt"></i><span>Plateau, Abidjan</span></div>
+            </div>
+        </div>
+        <div class="footer-bottom"><p>&copy; 2025 Le WASSA. Tous droits réservés.</p></div>
+    </footer>
+
+    <script src="restaurant-config.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

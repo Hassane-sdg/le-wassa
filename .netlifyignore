@@ -1,0 +1,17 @@
+# Netlify publishes only the allowlisted frontend build in dist/.
+# Exclude sensitive and private source data as defense in depth.
+server/
+backend/
+node_modules/
+.env
+.env.*
+*.db
+*.sqlite
+*.sqlite3
+*.db-*
+*.sqlite-*
+*.db-journal
+*.sqlite-journal
+*.log
+**/backups/
+backup_html_*/

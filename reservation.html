@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Demandez une réservation au maquis Le WASSA. L’équipe vous recontacte pour confirmer votre table.">
+    <meta name="theme-color" content="#121212">
+    <title>Réservation | Le WASSA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <header id="header">
+        <div class="logo">
+            <img src="images/bar.png" alt="Logo du Chic Wassa">
+            <h1>Le WASSA</h1>
+        </div>
+        <nav id="nav">
+            <ul>
+                <li><a href="acceuil.html" title="Page d'accueil">Accueil</a></li>
+                <li><a href="about.html" title="À propos">À propos</a></li>
+                <li><a href="menu.html" title="Consulter le menu">Menu</a></li>
+                <li><a href="events.html" title="Voir les événements">Événements</a></li>
+                <li><a href="team.html" title="Rencontrer l'équipe">Notre Équipe</a></li>
+                <li><a href="reservation.html" class="active" title="Réserver une table">Réservation</a></li>
+                <li><a href="admin-login.html" class="admin-link" title="Se connecter au tableau de bord">Admin</a></li>
+            </ul>
+        </nav>
+        <button class="menu-toggle" id="menu-toggle" type="button" aria-label="Ouvrir le menu" aria-controls="nav" aria-expanded="false">
+            <i class="fas fa-bars"></i>
+        </button>
+    </header>
+
+    <!-- Reservation Section -->
+    <section class="section reservation" id="reservation">
+        <div class="section-title">
+            <h2>Réservation</h2>
+            <p>Planifiez votre visite chez Élegance Chic</p>
+        </div>
+        <div class="reservation-container">
+            <div class="reservation-info">
+                <h3>Une Expérience Unique Vous Attend</h3>
+                <p>Que ce soit pour un dîner romantique, une sortie entre amis ou un événement professionnel, notre équipe se fera un plaisir de rendre votre expérience mémorable.</p>
+                <p>Réservez votre table à l'avance pour garantir votre place, surtout pour nos soirées événementielles qui affichent souvent complet.</p>
+                <div class="contact-info">
+                    <div class="contact-item">
+                        <i class="fas fa-phone-alt"></i>
+                        <span>+225 01 02 03 04 05</span>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-envelope"></i>
+                        <span>reservation@elegancechic.com</span>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>Rue des Gourmets, Plateau, Abidjan, Côte d'Ivoire</span>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-clock"></i>
+                        <span>Lundi - Dimanche: 11h - 23h (Bar ouvert jusqu'à 5h)</span>
+                    </div>
+                </div>
+            </div>
+            <div class="reservation-form">
+                <form id="booking-form">
+                    <div class="form-group">
+                        <label for="booking-name">Nom Complet</label>
+                        <input type="text" id="booking-name" class="form-control" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="booking-email">Email</label>
+                            <input type="email" id="booking-email" class="form-control" autocomplete="email">
+                        </div>
+                        <div class="form-group">
+                            <label for="booking-phone">Téléphone</label>
+                            <input type="tel" id="booking-phone" class="form-control" autocomplete="tel" inputmode="tel" maxlength="20" placeholder="+226 …" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="booking-date">Date</label>
+                            <input type="date" id="booking-date" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="booking-time">Heure</label>
+                            <input type="time" id="booking-time" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="booking-guests">Nombre de Personnes</label>
+                            <select id="booking-guests" class="form-control" required>
+                                <option value="1">1 Personne</option>
+                                <option value="2">2 Personnes</option>
+                                <option value="3">3 Personnes</option>
+                                <option value="4">4 Personnes</option>
+                                <option value="5">5 Personnes</option>
+                                <option value="6">6 Personnes</option>
+                                <option value="7">7 Personnes</option>
+                                <option value="8">8 Personnes</option>
+                                <option value="9">9+ Personnes</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="booking-event">Événement (Optionnel)</label>
+                            <select id="booking-event" class="form-control">
+                                <option value="">Aucun</option>
+                                <option value="afrobeat">Afrobeat Night</option>
+                                <option value="concert">Concert Yemi Alade</option>
+                                <option value="degustation">Dégustation Vins</option>
+                                <option value="brunch">Brunch Dominical</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="booking-notes">Notes Spéciales (Allergies, Préférences...)</label>
+                        <textarea id="booking-notes" class="form-control" rows="3"></textarea>
+                    </div>
+                    <button type="submit" class="submit-btn">Confirmer la Réservation</button>
+                    <p id="booking-status" class="form-status" role="status" aria-live="polite"></p>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer (uniform) -->
+    <footer>
+        <div class="footer-container">
+            <div class="footer-col">
+                <h3>Élégance Chic</h3>
+                <p>Maquis-resto premium — cuisine africaine réinventée dans une ambiance élégante.</p>
+                <div class="footer-social-links">
+                    <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                    <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                </div>
+            </div>
+            <div class="footer-col">
+                <h3>Liens</h3>
+                <ul class="footer-links">
+                    <li><a href="acceuil.html">Accueil</a></li>
+                    <li><a href="about.html">À propos</a></li>
+                    <li><a href="menu.html">Menu</a></li>
+                    <li><a href="events.html">Événements</a></li>
+                    <li><a href="team.html">Équipe</a></li>
+                    <li><a href="reservation.html">Réservation</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h3>Contact</h3>
+                <div class="footer-contact-item"><i class="fas fa-map-marker-alt"></i><span>Rue des Gourmets, Plateau, Abidjan</span></div>
+                <div class="footer-contact-item"><i class="fas fa-phone-alt"></i><span>+225 01 02 03 04 05</span></div>
+                <div class="footer-contact-item"><i class="fas fa-envelope"></i><span>contact@elegancechic.com</span></div>
+            </div>
+        </div>
+        <div class="footer-bottom"><p>&copy; 2025 Élégance Chic. Tous droits réservés.</p></div>
+    </footer>
+
+
+            <!-- Global loader (honeycomb) -->
+            <div id="global-loader">
+                <div class="honeycomb" aria-hidden="true"><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+            </div>
+        <script src="restaurant-config.js"></script>
+        <script src="script.js"></script>
+</body>
+</html>

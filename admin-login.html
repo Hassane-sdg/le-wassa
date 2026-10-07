@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Connexion Admin — Élégance Chic</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <header id="header">
+        <div class="logo">
+            <img src="images/bar.png" alt="Logo">
+            <h1>Le WASSA</h1>
+        </div>
+        <nav id="nav">
+            <ul>
+                <li><a href="acceuil.html">Accueil</a></li>
+                <li><a href="about.html">À propos</a></li>
+                <li><a href="menu.html">Menu</a></li>
+                <li><a href="events.html">Événements</a></li>
+                <li><a href="team.html">Équipe</a></li>
+                <li><a href="reservation.html">Réservation</a></li>
+            </ul>
+        </nav>
+        <button class="menu-toggle" id="menu-toggle" type="button" aria-label="Ouvrir le menu" aria-controls="nav" aria-expanded="false"><i class="fas fa-bars"></i></button>
+    </header>
+
+    <main class="section pt-120">
+        <div class="section-title">
+            <h2>Accès Administrateur</h2>
+            <p>Accès à l’espace de gestion.</p>
+        </div>
+
+        <div class="panel-light">
+            <p class="muted">Les commandes et tables sont protégées par le jeton <code>ADMIN_TOKEN</code> configuré sur le serveur. Il sera demandé dans le tableau de bord et conservé uniquement dans l’onglet courant.</p>
+            <a href="dashboard.html" class="btn btn-primary mt-20">Ouvrir le tableau de bord</a>
+            <p class="muted-small">Ne partagez jamais ce jeton. L’accès de démonstration ne remplace pas une authentification de production.</p>
+        </div>
+    </main>
+
+    <!-- Footer (uniform, simplified for admin) -->
+    <footer>
+        <div class="footer-container">
+            <div class="footer-col">
+                <h3>Élégance Chic</h3>
+                <p>Maquis-resto premium — gestion du site et contenu.</p>
+            </div>
+            <div class="footer-col">
+                <h3>Contact</h3>
+                <div class="footer-contact-item"><i class="fas fa-envelope"></i><span>contact@elegancechic.com</span></div>
+            </div>
+        </div>
+        <div class="footer-bottom"><p>&copy; 2025 Élégance Chic. Tous droits réservés.</p></div>
+    </footer>
+
+    <script src="restaurant-config.js"></script>
+    <script src="script.js"></script>
+
+</body>
+</html>
