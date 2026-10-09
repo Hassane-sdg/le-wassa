@@ -10,20 +10,20 @@ $env:ADMIN_TOKEN = 'local-demo-token-change-this-32chars'
 npm start
 ```
 
-Le serveur écoute sur le port `5173` par défaut et initialise le schéma, les tables de démonstration et le menu s’ils sont absents. `ADMIN_TOKEN` est obligatoire pour les routes d’administration en toute configuration. En production, `NODE_ENV=production` impose un jeton d’au moins 32 caractères.
+Le serveur écoute sur le port `5173` par défaut. En SQLite local, il initialise le schéma et le catalogue/tables d’exemple historiques si nécessaire. En PostgreSQL, il crée uniquement le schéma et les index, sans ajouter de données de démonstration ; les vraies tables et produits doivent être créés via le dashboard. `ADMIN_TOKEN` est obligatoire pour les routes d’administration. En production, `NODE_ENV=production` impose un jeton d’au moins 32 caractères et `DATABASE_URL`.
 
 ## Smoke test
 
-Laisser le serveur démarré dans un terminal, puis exécuter dans un autre terminal :
+Le smoke test démarre le serveur Express dans le même processus Node que le test, lié à `127.0.0.1` sur un port éphémère, avec une base SQLite créée dans un dossier temporaire. Il ne lit ni `BASE_URL`, ni `DATABASE_URL`/`TEST_DATABASE_URL` et refuse ces variables si elles sont renseignées. Aucun serveur déjà démarré ni base existante ne reçoit ses écritures.
 
 ```powershell
 Set-Location '...\Projet de 1Million\server'
-$env:ADMIN_TOKEN = 'local-demo-token-change-this-32chars'
-$env:BASE_URL = 'http://localhost:5173'
 npm run smoke
 ```
 
-Le smoke test actuel est destiné au mode SQLite : il crée et supprime une table et un produit temporaires et vérifie les sessions QR, le calcul serveur des commandes, les statuts, la fidélité, les réservations et le mode de paiement manuel. Il modifie directement l’expiration d’une session dans SQLite. Ne le lancez pas contre une base contenant des données réelles.
+Les commandes, sessions, réservation, produits/tables et points de fidélité sont créés uniquement dans cette base temporaire ; le serveur Express est fermé et le répertoire temporaire supprimé à la fin, y compris si le test échoue. Une erreur de démarrage ou de nettoyage est signalée.
+
+Les garde-fous de l’URL sont testés par `node --test ./scripts/smoke-target.test.js`. Ils acceptent uniquement une origine HTTP de loopback sur le port éphémère attendu ; les URLs externes, HTTPS, ports inattendus, identifiants, chemins et redirections sont refusés ou désactivés. Le smoke test lui-même n’offre pas de mode cible distante ni de mode PostgreSQL.
 
 ## Variables d’environnement
 
@@ -34,10 +34,9 @@ Le smoke test actuel est destiné au mode SQLite : il crée et supprime une tabl
 - `PUBLIC_SITE_URL` : domaine HTTPS réel du frontend, utilisé pour générer les QR.
 - `ALLOWED_ORIGINS` (alias historique : `CORS_ORIGINS`) : origines exactes, sans chemin.
 - `DATABASE_URL` : quand elle est présente, sélectionne PostgreSQL ; vide, le backend utilise SQLite local.
+- `PGSSLMODE=require` : active TLS avec vérification du certificat si le fournisseur l’exige.
 - `WASSA_DB_PATH` et `WASSA_DATA_DIR` : chemins privés optionnels pour les données SQLite locales.
 - `GEMINI_API_URL` et `GEMINI_API_KEY` : uniquement si la fonction Gemini facultative est utilisée.
-
-Ne publiez jamais `.env`, le jeton d’administration, la clé Gemini ou la base contenant les commandes. Le tableau de bord statique peut être consulté sans authentification ; seules les routes d’administration de l’API autorisent la consultation/modification des données après validation du jeton.
 
 Ne publiez jamais `.env`, le jeton d’administration, la clé Gemini ou une base contenant des données clients. Le tableau de bord statique peut être consulté sans authentification ; seules les routes d’administration de l’API sont protégées par le jeton.
 
@@ -46,3 +45,5 @@ Netlify publie uniquement `dist/`, produit à partir d’une liste blanche de re
 ## Limite avant production
 
 SQLite sur un runtime serverless ou éphémère ne garantit pas la persistance. L’adaptateur PostgreSQL est présent, mais le démarrage réel, les tests métier complets, la migration de données et le déploiement n’ont pas été validés. Ne déclarez pas le backend prêt pour la production avant d’avoir testé avec une vraie base PostgreSQL isolée, puis configuré le service de production et validé les parcours HTTPS.
+
+L’initialisation PostgreSQL est additive et idempotente (`CREATE TABLE/INDEX IF NOT EXISTS`) : elle ne supprime aucune donnée et ne peuple pas le menu ou les tables. Aucun transfert SQLite → PostgreSQL n’est effectué au démarrage ; prévoyez une migration contrôlée des données utiles avant la mise en service.

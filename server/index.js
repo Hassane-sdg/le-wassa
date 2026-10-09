@@ -1,4 +1,4 @@
-﻿require('dotenv').config();
+require('dotenv').config();
 
 const crypto = require('crypto');
 const express = require('express');
@@ -10,6 +10,7 @@ const { manualPaymentProvider } = require('./payments');
 
 const app = express();
 const PORT = Number(process.env.PORT || 5173);
+const HOST = process.env.WASSA_SMOKE_TEST === '1' ? '127.0.0.1' : '';
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || process.env.WONGO_ADMIN_TOKEN || '';
 const GEMINI_API_URL = process.env.GEMINI_API_URL;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
@@ -35,6 +36,15 @@ function badRequest(message) {
   const error = new Error(message);
   error.statusCode = 400;
   return error;
+}
+
+function sendApiError(res, error, fallback) {
+  const statusCode = Number(error.statusCode) || 500;
+  if (statusCode >= 500) {
+    console.error(fallback, { code: error.code || error.name || 'UNKNOWN' });
+    return res.status(statusCode).json({ ok: false, error: fallback });
+  }
+  return res.status(statusCode).json({ ok: false, error: error.message });
 }
 
 function requireAdmin(req, res, next) {
@@ -84,7 +94,7 @@ app.get('/api/health', async (req, res) => {
     const databaseName = db.getDatabaseType ? db.getDatabaseType() : 'sqlite';
     res.json({ ok: true, data: { status: 'healthy', database: databaseName, port: PORT } });
   } catch (error) {
-    res.status(500).json({ ok: false, error: error.message });
+    sendApiError(res, error, 'Health check is temporarily unavailable');
   }
 });
 
@@ -93,7 +103,7 @@ app.get('/api/menu', async (req, res) => {
     const items = await db.listProducts();
     res.json({ ok: true, data: items });
   } catch (error) {
-    res.status(500).json({ ok: false, error: error.message });
+    sendApiError(res, error, 'Menu is temporarily unavailable');
   }
 });
 
@@ -101,7 +111,7 @@ app.get('/api/admin/menu', requireAdmin, async (req, res) => {
   try {
     res.json({ ok: true, data: await db.listProducts(true) });
   } catch (error) {
-    res.status(500).json({ ok: false, error: error.message });
+    sendApiError(res, error, 'Admin menu is temporarily unavailable');
   }
 });
 
@@ -113,7 +123,7 @@ app.post('/api/menu', requireAdmin, async (req, res) => {
     }
     res.status(201).json({ ok: true, data: await db.saveProduct(product) });
   } catch (error) {
-    res.status(error.statusCode || 500).json({ ok: false, error: error.message || 'Failed to save product' });
+    sendApiError(res, error, 'Failed to save product');
   }
 });
 
@@ -123,7 +133,7 @@ app.put('/api/menu/:id', requireAdmin, async (req, res) => {
     const product = validateProduct(req.body || {}, req.params.id);
     res.json({ ok: true, data: await db.saveProduct(product) });
   } catch (error) {
-    res.status(error.statusCode || 500).json({ ok: false, error: error.message || 'Failed to update product' });
+    sendApiError(res, error, 'Failed to update product');
   }
 });
 
@@ -133,7 +143,7 @@ app.delete('/api/menu/:id', requireAdmin, async (req, res) => {
     if (!removed) return res.status(404).json({ ok: false, error: 'Product not found' });
     res.json({ ok: true, data: { deletedId: req.params.id } });
   } catch (error) {
-    res.status(500).json({ ok: false, error: error.message });
+    sendApiError(res, error, 'Failed to delete product');
   }
 });
 
@@ -142,7 +152,7 @@ app.get('/api/tables', async (req, res) => {
     const tables = await db.listTables();
     res.json({ ok: true, data: tables });
   } catch (error) {
-    res.status(500).json({ ok: false, error: error.message });
+    sendApiError(res, error, 'Tables are temporarily unavailable');
   }
 });
 
@@ -164,7 +174,7 @@ app.get('/api/tables/:id/qr', requireAdmin, async (req, res) => {
     res.set('Content-Disposition', `attachment; filename="table-${tableId}.png"`);
     res.send(image);
   } catch (error) {
-    res.status(error.statusCode || 500).json({ ok: false, error: error.message || 'Failed to generate table QR code' });
+    sendApiError(res, error, 'Failed to generate table QR code');
   }
 });
 
@@ -184,8 +194,7 @@ app.post('/api/table-sessions', async (req, res) => {
     });
     res.status(201).json({ ok: true, data: session });
   } catch (error) {
-    if (!error.statusCode) console.error('Table session creation failed:', error);
-    res.status(error.statusCode || 500).json({ ok: false, error: error.statusCode ? error.message : 'Failed to create table session' });
+    sendApiError(res, error, 'Failed to create table session');
   }
 });
 
@@ -214,7 +223,7 @@ app.post('/api/tables', requireAdmin, async (req, res) => {
 
     res.status(201).json({ ok: true, data: row });
   } catch (error) {
-    res.status(error.statusCode || 500).json({ ok: false, error: error.message || 'Failed to save table' });
+    sendApiError(res, error, 'Failed to save table');
   }
 });
 
@@ -231,7 +240,7 @@ app.put('/api/tables/:id', requireAdmin, async (req, res) => {
     if (!row) return res.status(404).json({ ok: false, error: 'Table not found' });
     res.json({ ok: true, data: row });
   } catch (error) {
-    res.status(error.statusCode || 500).json({ ok: false, error: error.message || 'Failed to update table' });
+    sendApiError(res, error, 'Failed to update table');
   }
 });
 
@@ -242,7 +251,7 @@ app.delete('/api/tables/:id', requireAdmin, async (req, res) => {
     if (!removed) return res.status(404).json({ ok: false, error: 'Table not found' });
     res.json({ ok: true, data: { deletedId: tableId } });
   } catch (error) {
-    res.status(500).json({ ok: false, error: error.message });
+    sendApiError(res, error, 'Failed to delete table');
   }
 });
 
@@ -251,7 +260,7 @@ app.get('/api/orders', requireAdmin, async (req, res) => {
     const orders = await db.listOrders();
     res.json({ ok: true, data: orders });
   } catch (error) {
-    res.status(500).json({ ok: false, error: error.message });
+    sendApiError(res, error, 'Orders are temporarily unavailable');
   }
 });
 
@@ -264,7 +273,7 @@ app.put('/api/orders/:id/status', requireAdmin, async (req, res) => {
     if (!order) return res.status(404).json({ ok: false, error: 'Order not found' });
     res.json({ ok: true, data: order });
   } catch (error) {
-    res.status(error.statusCode || 500).json({ ok: false, error: error.message || 'Failed to update order status' });
+    sendApiError(res, error, 'Failed to update order status');
   }
 });
 
@@ -362,8 +371,7 @@ app.post('/api/orders', async (req, res) => {
 
     res.status(order.replayed ? 200 : 201).json({ ok: true, data: order.order, replayed: order.replayed });
   } catch (error) {
-    if (!error.statusCode) console.error('Order creation failed:', error);
-    res.status(error.statusCode || 500).json({ ok: false, error: error.statusCode ? error.message : 'Failed to create order' });
+    sendApiError(res, error, 'Failed to create order');
   }
 });
 
@@ -372,7 +380,7 @@ app.get('/api/reservations', requireAdmin, async (req, res) => {
     const items = await db.listReservations();
     res.json({ ok: true, data: items });
   } catch (error) {
-    res.status(500).json({ ok: false, error: error.message });
+    sendApiError(res, error, 'Reservations are temporarily unavailable');
   }
 });
 
@@ -410,7 +418,7 @@ app.post('/api/reservations', async (req, res) => {
 
     res.status(201).json({ ok: true, data: item });
   } catch (error) {
-    res.status(error.statusCode || 500).json({ ok: false, error: error.message || 'Failed to create reservation' });
+    sendApiError(res, error, 'Failed to create reservation');
   }
 });
 
@@ -420,7 +428,7 @@ app.delete('/api/reservations/:id', requireAdmin, async (req, res) => {
     if (!removed) return res.status(404).json({ ok: false, error: 'Reservation not found' });
     res.json({ ok: true, data: { deletedId: Number(req.params.id) } });
   } catch (error) {
-    res.status(500).json({ ok: false, error: error.message });
+    sendApiError(res, error, 'Failed to delete reservation');
   }
 });
 
@@ -431,7 +439,7 @@ app.get('/api/loyalty', requireAdmin, async (req, res) => {
     const points = await db.getLoyalty(phone);
     res.json({ ok: true, data: points });
   } catch (error) {
-    res.status(error.statusCode || 500).json({ ok: false, error: error.message || 'Failed to load loyalty points' });
+    sendApiError(res, error, 'Failed to load loyalty points');
   }
 });
 
@@ -457,9 +465,7 @@ app.post('/api/gemini/generate', requireAdmin, async (req, res) => {
 
     res.json({ ok: true, data: response.data });
   } catch (error) {
-    console.error('Gemini request failed', error.message);
-    const status = error.statusCode || (error.response ? error.response.status : 500);
-    res.status(status).json({ ok: false, error: status === 400 ? error.message : 'The announcement service is unavailable' });
+    sendApiError(res, error, 'The announcement service is unavailable');
   }
 });
 
@@ -472,12 +478,36 @@ async function startServer() {
     throw new Error('Set ADMIN_TOKEN to at least 32 random characters before starting in production');
   }
   await db.ensureDatabase();
-  app.listen(PORT, () => {
-    console.log(`Le WASSA API listening on http://localhost:${PORT}`);
+  let server;
+  const onListening = () => {
+    const address = server.address();
+    console.log(`Le WASSA API listening on http://localhost:${address.port}`);
+  };
+  server = HOST
+    ? app.listen(PORT, HOST, onListening)
+    : app.listen(PORT, onListening);
+
+  for (const signal of ['SIGINT', 'SIGTERM']) {
+    process.once(signal, () => {
+      server.close(async () => {
+        try {
+          await db.closeDatabase();
+          process.exitCode = 0;
+        } catch (error) {
+          console.error('Database shutdown failed', { code: error.code || error.name || 'UNKNOWN' });
+          process.exitCode = 1;
+        }
+      });
+    });
+  }
+  return server;
+}
+
+if (require.main === module) {
+  startServer().catch(error => {
+    console.error('Failed to start Le WASSA API', { code: error.code || error.name || 'UNKNOWN' });
+    process.exit(1);
   });
 }
 
-startServer().catch(error => {
-  console.error('Failed to start Le WASSA API', error);
-  process.exit(1);
-});
+module.exports = { app, startServer };

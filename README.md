@@ -50,7 +50,7 @@ npm ci
 npm start
 ```
 
-L’API écoute par défaut sur `http://localhost:5173`. En l’absence de `DATABASE_URL`, elle utilise SQLite et crée la base hors du dépôt (Windows : `%LOCALAPPDATA%\LeWASSA\db.sqlite`). Elle initialise le catalogue et les tables d’exemple si la base est vide. N’utilisez jamais le jeton local comme secret de production.
+L’API écoute par défaut sur `http://localhost:5173`. En développement, sans `DATABASE_URL`, elle utilise SQLite et crée la base hors du dépôt (Windows : `%LOCALAPPDATA%\LeWASSA\db.sqlite`). SQLite local conserve l’initialisation historique du catalogue et des tables d’exemple. En production (`NODE_ENV=production`), `DATABASE_URL` est obligatoire et PostgreSQL n’insère aucune donnée de démonstration : les vraies tables et le menu doivent être créés via l’administration. N’utilisez jamais le jeton local comme secret de production.
 
 Ouvrez `admin-login.html` pour vous connecter au tableau de bord avec le même jeton. Le jeton d’administration n’est pas une configuration à inscrire dans les fichiers publics.
 
@@ -68,6 +68,7 @@ Les variables backend se règlent dans l’environnement du processus ou à part
 | `ALLOWED_ORIGINS` / `CORS_ORIGINS` | Origines frontend autorisées, séparées par des virgules |
 | `WASSA_DB_PATH` / `WASSA_DATA_DIR` | Chemin privé SQLite en développement |
 | `DATABASE_URL` | Connexion PostgreSQL ; sélectionne l’adaptateur PostgreSQL |
+| `PGSSLMODE` | Mettre `require` si le fournisseur PostgreSQL impose TLS ; le certificat est vérifié |
 | `GEMINI_API_URL` / `GEMINI_API_KEY` | Fonction Gemini facultative, côté serveur uniquement |
 
 Ne commitez jamais `.env`, `DATABASE_URL`, tokens, clés API, fichiers SQLite ou sauvegardes. Le `.gitignore` protège ces fichiers ; vérifiez tout de même les fichiers proposés avant chaque commit.
@@ -81,17 +82,16 @@ npm run build:netlify
 npm run test:netlify-build
 ```
 
-Pour le smoke test du backend, démarrez d’abord l’API avec une base SQLite jetable et un jeton de test. Dans un autre terminal :
+Le smoke test du backend démarre le serveur Express dans le même processus Node que le test, lié à `127.0.0.1` sur un port éphémère, avec un jeton aléatoire et une base SQLite temporaire :
 
 ```powershell
 Set-Location .\server
-$env:WASSA_DB_PATH = Join-Path $env:TEMP 'wassa-smoke-test.sqlite'
-$env:ADMIN_TOKEN = 'local-demo-token-change-this-32chars'
-$env:BASE_URL = 'http://localhost:5173'
 npm run smoke
 ```
 
-Le test vérifie notamment les accès admin, tables/sessions, QR, calcul des prix, idempotence, commandes, statuts, fidélité, réservations et paiement manuel. Il nécessite une API démarrée avec le même environnement et nettoie les enregistrements de test ; utilisez une base isolée, jamais les données d’un établissement.
+Les données de test restent dans cette base jetable, supprimée après la fermeture du serveur Express dans le processus de test. Le script refuse `BASE_URL`, `DATABASE_URL` et `TEST_DATABASE_URL` renseignées ; il ne contacte aucun serveur préexistant, aucune base distante et ne propose pas de cible distante.
+
+Les validations des URLs locales et le rejet des URLs HTTPS, IPs distantes, domaines publics, Render et Netlify sont vérifiés par `node --test .\scripts\smoke-target.test.js`. Le smoke test de bout en bout couvre entre autres les commandes, idempotence concurrente, sessions, réservations, fidélité, statuts et paiement manuel.
 
 ## Production et déploiement
 
@@ -102,6 +102,7 @@ Le frontend statique peut être déployé sur Netlify en utilisant `npm run buil
 - Le build Netlify est filtré par liste blanche.
 - SQLite est le stockage local par défaut, pas une base de production pour un runtime éphémère.
 - L’adaptateur PostgreSQL est sélectionné quand `DATABASE_URL` est fourni, mais il n’a pas été validé par un test complet sur PostgreSQL réel.
+- L’initialisation PostgreSQL crée seulement tables et index, sans menu ni tables de démonstration ; cette étape ne migre pas les enregistrements SQLite existants.
 - Aucune URL backend/frontend, base distante, variable secrète ni infrastructure de production n’est configurée dans ce dépôt.
 
 Avant tout déploiement réel, il faut configurer les secrets dans la plateforme d’hébergement, une base PostgreSQL persistante, les origines CORS exactes, les URLs HTTPS du frontend/API et réaliser des tests complets sur les parcours client et administrateur. Ne publiez pas de QR de production avant de connaître le domaine public définitif.

@@ -3,36 +3,18 @@ const { Pool } = require('pg');
 
 let pool = process.env.DATABASE_URL ? new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.PGSSLMODE === 'require' ? { rejectUnauthorized: false } : undefined,
+  ssl: process.env.PGSSLMODE === 'require' ? { rejectUnauthorized: true } : undefined,
   max: 10,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 10000
 }) : null;
 
-function defaultMenu() {
-  return [
-    { id: 'poulet-braise', name: 'Poulet braisé', category: 'Grillades', price: 12000, badge: 'Signature', description: 'Poulet mariné aux épices africaines, servi avec alloco et sauce maison.', image: 'images/grillade.png' },
-    { id: 'poisson-braise', name: 'Poisson braisé', category: 'Grillades', price: 15000, badge: 'Spécialité', description: 'Poisson gras grillé au feu de bois, accompagnements maison.', image: 'images/grillade.png' },
-    { id: 'attieke-poisson', name: 'Attiéké poisson', category: 'Grillades', price: 11000, badge: 'Populaire', description: 'Attiéké léger, poisson de mer, tomate, oignon et piment.', image: 'images/grillade.png' },
-    { id: 'kedjenou', name: 'Kedjenou de poulet', category: 'Grillades', price: 14000, badge: 'Chef', description: 'Poulet mijoté aux légumes et épices locales.', image: 'images/grillade.png' },
-    { id: 'alloco', name: 'Alloco', category: 'Accompagnements', price: 5000, badge: 'Accompagnement', description: 'Plantain frit, sauce piquante et oignons frais.', image: 'images/grillade.png' },
-    { id: 'riz-sauce', name: 'Riz sauce', category: 'Accompagnements', price: 6000, badge: 'Classique', description: 'Riz parfumé et sauce généreuse aux saveurs locales.', image: 'images/grillade.png' },
-    { id: 'coca-cola', name: 'Coca-Cola', category: 'Boissons', price: 1500, badge: 'Boisson', description: 'Boisson rafraîchissante glacée.', image: 'images/bar.png' },
-    { id: 'jus-mangue', name: 'Jus de mangue', category: 'Boissons', price: 3000, badge: 'Frais', description: 'Jus frais à base de mangue locale.', image: 'images/bar.png' },
-    { id: 'tropical-sun', name: 'Tropical Sun', category: 'Boissons', price: 3500, badge: 'Nouveau', description: 'Mocktail exotique avec fruits tropicaux.', image: 'images/bar.png' },
-    { id: 'dessert-exotique', name: 'Dessert exotique', category: 'Desserts', price: 8000, badge: 'Signature', description: 'Fruits frais, glace coco et coulis de mangue.', image: 'images/grillade.png' }
-  ];
-}
-
 function safeJsonParse(value) {
   if (value == null) return [];
   if (Array.isArray(value)) return value;
-  try {
-    const parsed = JSON.parse(value);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (error) {
-    return [];
-  }
+  const parsed = JSON.parse(value);
+  if (!Array.isArray(parsed)) throw new TypeError('Stored order items are not an array');
+  return parsed;
 }
 
 function normalizeOrderRow(row) {
@@ -41,6 +23,8 @@ function normalizeOrderRow(row) {
   if (normalized.items !== undefined) {
     normalized.items = safeJsonParse(normalized.items);
   }
+  if (normalized.total !== undefined) normalized.total = Number(normalized.total);
+  if (normalized.pointsAwarded !== undefined) normalized.pointsAwarded = Number(normalized.pointsAwarded);
   return normalized;
 }
 
@@ -48,10 +32,13 @@ function normalizeRows(rows) {
   return rows.map(normalizeOrderRow);
 }
 
-function convertQuestionMarks(sql, params = []) {
-  let index = 0;
-  const normalizedSql = sql.replace(/\?/g, () => `$${++index}`);
-  return { text: normalizedSql, values: params };
+function normalizeReservation(row) {
+  if (!row) return row;
+  return {
+    ...row,
+    id: Number(row.id),
+    date: row.date instanceof Date ? row.date.toISOString() : row.date
+  };
 }
 
 async function ensurePool() {
@@ -66,36 +53,14 @@ async function query(text, params = []) {
   return client.query(text, params);
 }
 
-function getDatabaseType() {
-  return 'postgresql';
+if (pool) {
+  pool.on('error', error => {
+    console.error('PostgreSQL idle connection error', { code: error.code || 'UNKNOWN' });
+  });
 }
 
-async function getDb() {
-  await ensurePool();
-  return {
-    query: async (text, params = []) => query(text, params),
-    run: async (text, params = []) => {
-      const prepared = convertQuestionMarks(text, params);
-      const result = await query(prepared.text, prepared.values);
-      return { changes: result.rowCount || 0, lastID: result.rows[0] && Number.isInteger(result.rows[0].id) ? result.rows[0].id : null };
-    },
-    get: async (text, params = []) => {
-      const prepared = convertQuestionMarks(text, params);
-      const result = await query(prepared.text, prepared.values);
-      return result.rows[0] || null;
-    },
-    all: async (text, params = []) => {
-      const prepared = convertQuestionMarks(text, params);
-      const result = await query(prepared.text, prepared.values);
-      return result.rows;
-    },
-    close: async () => {
-      if (pool) {
-        await pool.end();
-        pool = null;
-      }
-    }
-  };
+function getDatabaseType() {
+  return 'postgresql';
 }
 
 async function ensureDatabase() {
@@ -143,7 +108,7 @@ async function ensureDatabase() {
       customer_name TEXT NOT NULL,
       customer_phone TEXT,
       note TEXT,
-      total INTEGER NOT NULL,
+      total BIGINT NOT NULL,
       status TEXT NOT NULL DEFAULT 'PENDING',
       payment_method TEXT NOT NULL DEFAULT 'pay_on_site',
       payment_status TEXT NOT NULL DEFAULT 'PAY_ON_SITE',
@@ -152,6 +117,11 @@ async function ensureDatabase() {
       request_fingerprint TEXT,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       items JSONB NOT NULL DEFAULT '[]'::jsonb
+    );
+
+    CREATE TABLE IF NOT EXISTS loyalty (
+      "customerName" TEXT PRIMARY KEY,
+      points INTEGER NOT NULL DEFAULT 0
     );
 
     CREATE TABLE IF NOT EXISTS loyalty_accounts (
@@ -167,25 +137,13 @@ async function ensureDatabase() {
 
     CREATE INDEX IF NOT EXISTS table_sessions_expiry_idx
     ON table_sessions (expires_at);
+
+    CREATE INDEX IF NOT EXISTS products_category_name_idx
+    ON products (category, name);
+
+    CREATE INDEX IF NOT EXISTS orders_created_at_idx
+    ON orders (created_at DESC);
   `);
-
-  const countResult = await pool.query('SELECT COUNT(*) AS count FROM products');
-  if ((Number(countResult.rows[0].count) || 0) === 0) {
-    for (const item of defaultMenu()) {
-      await pool.query(
-        `INSERT INTO products (id, name, category, price, badge, description, image, available)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, TRUE)`,
-        [item.id, item.name, item.category, item.price, item.badge, item.description, item.image || 'images/profil.png']
-      );
-    }
-  }
-
-  for (const tableId of ['01', '02', '03', '04', '05']) {
-    const exists = await pool.query('SELECT 1 FROM tables WHERE id = $1', [tableId]);
-    if (!exists.rowCount) {
-      await pool.query('INSERT INTO tables (id, label, status) VALUES ($1, $2, $3)', [tableId, `Table ${tableId}`, 'available']);
-    }
-  }
 }
 
 async function getProductById(productId) {
@@ -274,11 +232,16 @@ async function getTableSession(id) {
   return result.rows[0] || null;
 }
 
+async function expireTableSession(id, expiresAt) {
+  const result = await query('UPDATE table_sessions SET expires_at = $1 WHERE id = $2 RETURNING id', [expiresAt, id]);
+  return result.rowCount > 0;
+}
+
 async function listReservations() {
   const result = await query(
     'SELECT id, name, date, party, note, phone, email, event FROM reservations ORDER BY id DESC'
   );
-  return result.rows;
+  return result.rows.map(normalizeReservation);
 }
 
 async function createReservation({ id, name, date, party, note, phone, email, event }) {
@@ -286,7 +249,7 @@ async function createReservation({ id, name, date, party, note, phone, email, ev
     'INSERT INTO reservations (id, name, date, party, note, phone, email, event) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id, name, date, party, note, phone, email, event',
     [id, name, date, party, note || '', phone || '', email || '', event || '']
   );
-  return result.rows[0];
+  return normalizeReservation(result.rows[0]);
 }
 
 async function deleteReservation(id) {
@@ -363,7 +326,7 @@ async function updateOrderStatus(id, status) {
          request_fingerprint AS "requestFingerprint",
          created_at AS "createdAt",
          items
-       FROM orders WHERE id = $1`,
+       FROM orders WHERE id = $1 FOR UPDATE`,
       [id]
     );
     const row = rowResult.rows[0];
@@ -409,7 +372,11 @@ async function updateOrderStatus(id, status) {
     await transaction.query('COMMIT');
     return normalizeOrderRow(updated.rows[0]);
   } catch (error) {
-    await transaction.query('ROLLBACK');
+    try {
+      await transaction.query('ROLLBACK');
+    } catch (rollbackError) {
+      console.error('PostgreSQL order-status rollback failed', { code: rollbackError.code || 'UNKNOWN' });
+    }
     throw error;
   } finally {
     transaction.release();
@@ -431,32 +398,88 @@ async function createOrder({
   idempotencyKey,
   requestFingerprint
 }) {
-  const existingResult = idempotencyKey
-    ? await query(
-        `SELECT
-           id,
-           table_id AS "tableId",
-           session_id AS "sessionId",
-           customer_name AS "customerName",
-           customer_phone AS "customerPhone",
-           note,
-           total,
-           status,
-           payment_method AS "paymentMethod",
-           payment_status AS "paymentStatus",
-           points_awarded AS "pointsAwarded",
-           idempotency_key AS "idempotencyKey",
-           request_fingerprint AS "requestFingerprint",
-           created_at AS "createdAt",
-           items
-         FROM orders WHERE idempotency_key = $1`,
-        [idempotencyKey]
-      )
-    : { rows: [] };
+  const client = await ensurePool();
+  const transaction = await client.connect();
+  try {
+    await transaction.query('BEGIN');
+    const inserted = await transaction.query(
+      `INSERT INTO orders (
+        id,
+        table_id,
+        session_id,
+        customer_name,
+        customer_phone,
+        note,
+        total,
+        status,
+        payment_method,
+        payment_status,
+        items,
+        idempotency_key,
+        request_fingerprint
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::jsonb, $12, $13)
+       ON CONFLICT (idempotency_key) WHERE idempotency_key IS NOT NULL DO NOTHING
+       RETURNING
+         id,
+         table_id AS "tableId",
+         session_id AS "sessionId",
+         customer_name AS "customerName",
+         customer_phone AS "customerPhone",
+         note,
+         total,
+         status,
+         payment_method AS "paymentMethod",
+         payment_status AS "paymentStatus",
+         points_awarded AS "pointsAwarded",
+         idempotency_key AS "idempotencyKey",
+         request_fingerprint AS "requestFingerprint",
+         created_at AS "createdAt",
+         items`,
+      [
+        id,
+        tableId,
+        sessionId || null,
+        customerName,
+        customerPhone || '',
+        note || '',
+        total,
+        status || 'PENDING',
+        paymentMethod || 'pay_on_site',
+        paymentStatus || 'PAY_ON_SITE',
+        JSON.stringify(items),
+        idempotencyKey || null,
+        requestFingerprint || null
+      ]
+    );
 
-  if (existingResult.rows[0]) {
-    const existing = normalizeOrderRow(existingResult.rows[0]);
-    const sameOrder = existing.tableId === tableId &&
+    if (inserted.rows[0]) {
+      await transaction.query('COMMIT');
+      return { order: normalizeOrderRow(inserted.rows[0]), replayed: false };
+    }
+
+    const existingResult = await transaction.query(
+      `SELECT
+         id,
+         table_id AS "tableId",
+         session_id AS "sessionId",
+         customer_name AS "customerName",
+         customer_phone AS "customerPhone",
+         note,
+         total,
+         status,
+         payment_method AS "paymentMethod",
+         payment_status AS "paymentStatus",
+         points_awarded AS "pointsAwarded",
+         idempotency_key AS "idempotencyKey",
+         request_fingerprint AS "requestFingerprint",
+         created_at AS "createdAt",
+         items
+       FROM orders WHERE idempotency_key = $1 FOR UPDATE`,
+      [idempotencyKey]
+    );
+    const existing = existingResult.rows[0] && normalizeOrderRow(existingResult.rows[0]);
+    const sameOrder = existing &&
+      existing.tableId === tableId &&
       existing.sessionId === sessionId &&
       existing.customerName === customerName &&
       existing.customerPhone === (customerPhone || '') &&
@@ -465,65 +488,27 @@ async function createOrder({
       (
         existing.requestFingerprint
           ? existing.requestFingerprint === requestFingerprint
-          : JSON.stringify((existing.items || []).map(item => [item.productId, item.quantity])) === JSON.stringify((items || []).map(item => [item.productId, item.quantity]))
+          : JSON.stringify((existing.items || []).map(item => [item.productId, item.quantity])) ===
+            JSON.stringify((items || []).map(item => [item.productId, item.quantity]))
       );
     if (!sameOrder) {
       const error = new Error('This order confirmation key was already used for different order details');
       error.statusCode = 409;
       throw error;
     }
-    return { order: existing, replayed: true };
-  }
 
-  const result = await query(
-    `INSERT INTO orders (
-      id,
-      table_id,
-      session_id,
-      customer_name,
-      customer_phone,
-      note,
-      total,
-      status,
-      payment_method,
-      payment_status,
-      items,
-      idempotency_key,
-      request_fingerprint
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::jsonb, $12, $13)
-     RETURNING
-       id,
-       table_id AS "tableId",
-       session_id AS "sessionId",
-       customer_name AS "customerName",
-       customer_phone AS "customerPhone",
-       note,
-       total,
-       status,
-       payment_method AS "paymentMethod",
-       payment_status AS "paymentStatus",
-       points_awarded AS "pointsAwarded",
-       idempotency_key AS "idempotencyKey",
-       request_fingerprint AS "requestFingerprint",
-       created_at AS "createdAt",
-       items`,
-    [
-      id,
-      tableId,
-      sessionId || null,
-      customerName,
-      customerPhone || '',
-      note || '',
-      total,
-      status || 'PENDING',
-      paymentMethod || 'pay_on_site',
-      paymentStatus || 'PAY_ON_SITE',
-      JSON.stringify(items),
-      idempotencyKey || null,
-      requestFingerprint || null
-    ]
-  );
-  return { order: normalizeOrderRow(result.rows[0]), replayed: false };
+    await transaction.query('COMMIT');
+    return { order: existing, replayed: true };
+  } catch (error) {
+    try {
+      await transaction.query('ROLLBACK');
+    } catch (rollbackError) {
+      console.error('PostgreSQL order-creation rollback failed', { code: rollbackError.code || 'UNKNOWN' });
+    }
+    throw error;
+  } finally {
+    transaction.release();
+  }
 }
 
 async function getLoyalty(phone) {
@@ -539,10 +524,8 @@ async function closeDatabase() {
 }
 
 module.exports = {
-  DB_FILE: process.env.DATABASE_URL || 'postgresql://configured-through-DATABASE_URL',
   ensureDatabase,
   ensureTable: ensureDatabase,
-  getDb,
   closeDatabase,
   getDatabaseType,
   getProductById,
@@ -555,6 +538,7 @@ module.exports = {
   listTables,
   createTableSession,
   getTableSession,
+  expireTableSession,
   listReservations,
   createReservation,
   deleteReservation,

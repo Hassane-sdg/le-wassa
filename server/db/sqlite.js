@@ -7,6 +7,7 @@ const { DATA_DIRECTORY, resolvePrivateDataPath } = require('./paths');
 
 const DB_FILE = resolvePrivateDataPath(process.env.WASSA_DB_PATH || path.join(DATA_DIRECTORY, 'db.sqlite'));
 let dbPromise = null;
+let transactionTail = Promise.resolve();
 
 function defaultMenu() {
   return [
@@ -26,16 +27,59 @@ function defaultMenu() {
 async function getDb() {
   if (!dbPromise) {
     fs.mkdirSync(path.dirname(DB_FILE), { recursive: true });
-    dbPromise = open({ filename: DB_FILE, driver: sqlite3.Database });
+    dbPromise = open({ filename: DB_FILE, driver: sqlite3.Database })
+      .then(async db => {
+        await db.exec('PRAGMA busy_timeout = 5000');
+        return db;
+      })
+      .catch(error => {
+        dbPromise = null;
+        throw error;
+      });
   }
   return dbPromise;
 }
 
 async function closeDatabase() {
+  await transactionTail;
   if (!dbPromise) return;
   const db = await dbPromise;
   dbPromise = null;
   await db.close();
+}
+
+async function withTransaction(callback) {
+  const previousTransaction = transactionTail;
+  let releaseTransaction;
+  transactionTail = new Promise(resolve => {
+    releaseTransaction = resolve;
+  });
+  await previousTransaction;
+
+  try {
+    await getDb();
+    const transactionDb = await open({ filename: DB_FILE, driver: sqlite3.Database });
+    try {
+      await transactionDb.exec('PRAGMA busy_timeout = 5000');
+      await transactionDb.exec('BEGIN IMMEDIATE');
+      try {
+        const result = await callback(transactionDb);
+        await transactionDb.exec('COMMIT');
+        return result;
+      } catch (error) {
+        try {
+          await transactionDb.exec('ROLLBACK');
+        } catch (rollbackError) {
+          console.error('SQLite transaction rollback failed', { code: rollbackError.code || rollbackError.name || 'UNKNOWN' });
+        }
+        throw error;
+      }
+    } finally {
+      await transactionDb.close();
+    }
+  } finally {
+    releaseTransaction();
+  }
 }
 
 async function ensureDatabase() {
@@ -238,6 +282,12 @@ async function getTableSession(id) {
   );
 }
 
+async function expireTableSession(id, expiresAt) {
+  const db = await getDb();
+  const result = await db.run('UPDATE table_sessions SET expiresAt = ? WHERE id = ?', [expiresAt, id]);
+  return result.changes > 0;
+}
+
 async function listReservations() {
   const db = await getDb();
   return db.all('SELECT id, name, date, party, note, phone, email, event FROM reservations ORDER BY id DESC');
@@ -271,14 +321,9 @@ async function getOrderByIdempotencyKey(idempotencyKey) {
 }
 
 async function updateOrderStatus(id, status) {
-  const db = await getDb();
-  await db.exec('BEGIN IMMEDIATE');
-  try {
+  return withTransaction(async db => {
     const row = await db.get('SELECT * FROM orders WHERE id = ?', [id]);
-    if (!row) {
-      await db.exec('COMMIT');
-      return null;
-    }
+    if (!row) return null;
 
     let pointsAwarded = Number(row.pointsAwarded || 0);
     if (status === 'COMPLETED' && row.status !== 'COMPLETED' && row.customerPhone && pointsAwarded === 0) {
@@ -292,13 +337,9 @@ async function updateOrderStatus(id, status) {
     }
 
     await db.run('UPDATE orders SET status = ?, pointsAwarded = ? WHERE id = ?', [status, pointsAwarded, id]);
-    await db.exec('COMMIT');
     const updated = await db.get('SELECT * FROM orders WHERE id = ?', [id]);
     return { ...updated, items: JSON.parse(updated.items || '[]') };
-  } catch (error) {
-    await db.exec('ROLLBACK');
-    throw error;
-  }
+  });
 }
 
 async function createOrder({
@@ -316,9 +357,7 @@ async function createOrder({
   idempotencyKey,
   requestFingerprint
 }) {
-  const db = await getDb();
-  await db.exec('BEGIN IMMEDIATE');
-  try {
+  return withTransaction(async db => {
     if (idempotencyKey) {
       const existing = await db.get('SELECT * FROM orders WHERE idempotencyKey = ?', idempotencyKey);
       if (existing) {
@@ -339,7 +378,6 @@ async function createOrder({
           throw error;
         }
 
-        await db.exec('COMMIT');
         return { order: { ...existing, items: existingItems }, replayed: true };
       }
     }
@@ -367,12 +405,8 @@ async function createOrder({
     );
 
     const row = await db.get('SELECT * FROM orders WHERE id = ?', id);
-    await db.exec('COMMIT');
     return { order: { ...row, items: JSON.parse(row.items || '[]') }, replayed: false };
-  } catch (error) {
-    await db.exec('ROLLBACK');
-    throw error;
-  }
+  });
 }
 
 async function getLoyalty(phone) {
@@ -398,6 +432,7 @@ module.exports = {
   listTables,
   createTableSession,
   getTableSession,
+  expireTableSession,
   listReservations,
   createReservation,
   deleteReservation,

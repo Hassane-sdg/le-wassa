@@ -1,29 +1,66 @@
 const assert = require('assert');
 const axios = require('axios');
-const db = require('../db/sqlite');
+const crypto = require('crypto');
+const { once } = require('events');
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
+require('dotenv').config();
+const { localSmokeBaseUrl } = require('./smoke-target');
+
+if (process.env.NODE_ENV === 'production') {
+  throw new Error('Smoke tests cannot run with NODE_ENV=production.');
+}
+
+if (process.env.DATABASE_URL || process.env.TEST_DATABASE_URL) {
+  throw new Error('Smoke tests use a temporary SQLite database; unset DATABASE_URL and TEST_DATABASE_URL.');
+}
+
+if (process.env.BASE_URL) {
+  throw new Error('BASE_URL overrides are disabled; the smoke test starts its own isolated local API.');
+}
 
 async function run() {
-  const base = (process.env.BASE_URL || 'http://localhost:5173').replace(/\/$/, '');
-  const adminToken = process.env.ADMIN_TOKEN;
-  if (!adminToken) throw new Error('Set ADMIN_TOKEN to the token used by the running API server.');
-
-  const admin = axios.create({
-    baseURL: base,
-    headers: { Authorization: `Bearer ${adminToken}` }
-  });
-  const api = axios.create({ baseURL: base });
-  const timestamp = Date.now();
-  const tableId = `smoke_${timestamp}`;
-  const productId = `smoke-${timestamp}`;
-  const customerPhone = `+226${String(timestamp).slice(-8)}`;
-  let reservationId;
-  let tableCreated = false;
-  let productCreated = false;
-  let orderId;
+  const temporaryDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'le-wassa-smoke-'));
+  const databasePath = path.join(temporaryDirectory, 'smoke.sqlite');
+  const adminToken = crypto.randomBytes(32).toString('hex');
+  let db;
+  let server;
+  let testError;
+  const cleanupErrors = [];
 
   try {
+    process.env.NODE_ENV = 'test';
+    process.env.ADMIN_TOKEN = adminToken;
+    process.env.PORT = '0';
+    process.env.WASSA_SMOKE_TEST = '1';
+    process.env.WONGO_ADMIN_TOKEN = '';
+    process.env.NODE_OPTIONS = '';
+    process.env.DATABASE_URL = '';
+    process.env.TEST_DATABASE_URL = '';
+    process.env.WASSA_DB_PATH = databasePath;
+    process.env.WASSA_DATA_DIR = temporaryDirectory;
+    db = require('../db');
+    const { startServer } = require('../index');
+    server = await startServer();
+    if (!server.listening) await once(server, 'listening');
+    const port = server.address().port;
+    const base = localSmokeBaseUrl(`http://127.0.0.1:${port}`, port);
+    const admin = axios.create({
+      baseURL: base,
+      proxy: false,
+      maxRedirects: 0,
+      headers: { Authorization: `Bearer ${adminToken}` }
+    });
+    const api = axios.create({ baseURL: base, proxy: false, maxRedirects: 0 });
+    const timestamp = Date.now();
+    const tableId = `smoke_${timestamp}`;
+    const productId = `smoke-${timestamp}`;
+    const customerPhone = `+226${String(timestamp).slice(-8)}`;
+
     const health = await api.get('/api/health');
     assert.strictEqual(health.data.data.status, 'healthy');
+    assert.strictEqual(health.data.data.database, db.getDatabaseType ? db.getDatabaseType() : 'sqlite');
 
     const privateRequests = [
       api.get('/api/orders'),
@@ -54,8 +91,6 @@ async function run() {
     ), 'Public table listing must not expose customer or operational records');
 
     await admin.post('/api/tables', { id: tableId, label: `Table test ${timestamp}`, status: 'available' });
-    tableCreated = true;
-
     const session = await api.post('/api/table-sessions', { tableId });
     assert.strictEqual(session.data.data.tableId, tableId);
 
@@ -74,7 +109,6 @@ async function run() {
       available: true
     };
     await admin.post('/api/menu', product);
-    productCreated = true;
     assert.ok((await api.get('/api/menu')).data.data.some(item => item.id === productId));
 
     await assert.rejects(admin.post('/api/menu', { ...product, price: -1 }), error => error.response.status === 400);
@@ -90,16 +124,20 @@ async function run() {
       items: [{ productId, quantity: 2, unitPrice: 1, totalPrice: 1 }]
     };
     const idempotencyKey = `${timestamp.toString(16)}${'a'.repeat(32)}`;
-    const createdOrder = await api.post('/api/orders', orderPayload, {
-      headers: { 'Idempotency-Key': idempotencyKey }
-    });
+    const confirmationResponses = await Promise.all([
+      api.post('/api/orders', orderPayload, { headers: { 'Idempotency-Key': idempotencyKey } }),
+      api.post('/api/orders', orderPayload, { headers: { 'Idempotency-Key': idempotencyKey } })
+    ]);
+    const createdOrder = confirmationResponses.find(response => response.status === 201);
+    const concurrentReplay = confirmationResponses.find(response => response.status === 200);
+    assert.ok(createdOrder, 'One concurrent confirmation must create the order');
+    assert.ok(concurrentReplay, 'The other concurrent confirmation must replay the order');
     const order = createdOrder.data.data;
-    orderId = order.id;
-    assert.strictEqual(createdOrder.status, 201);
     assert.strictEqual(order.total, 2468);
     assert.strictEqual(order.items[0].unitPrice, 1234);
     assert.strictEqual(order.paymentStatus, 'PAY_ON_SITE');
     assert.strictEqual(order.paymentMethod, 'pay_on_site');
+    assert.strictEqual(concurrentReplay.data.data.id, order.id);
 
     const replayedOrder = await api.post('/api/orders', orderPayload, {
       headers: { 'Idempotency-Key': idempotencyKey }
@@ -121,11 +159,7 @@ async function run() {
     assert.ok(storedOrders.some(item => item.id === order.id), 'Created order must be persisted and available to the authenticated dashboard');
 
     const expiredSession = await api.post('/api/table-sessions', { tableId });
-    const database = await db.getDb();
-    await database.run(
-      "UPDATE table_sessions SET expiresAt = ? WHERE id = ?",
-      [new Date(Date.now() - 60000).toISOString(), expiredSession.data.data.id]
-    );
+    await db.expireTableSession(expiredSession.data.data.id, new Date(Date.now() - 60000).toISOString());
     await assert.rejects(api.post('/api/orders', {
       ...orderPayload,
       sessionId: expiredSession.data.data.id
@@ -149,19 +183,48 @@ async function run() {
       party: 2,
       note: 'Test de réservation'
     });
-    reservationId = reservation.data.data.id;
-    assert.ok((await admin.get('/api/reservations')).data.data.some(item => item.id === reservationId));
+    assert.ok((await admin.get('/api/reservations')).data.data.some(item => item.id === reservation.data.data.id));
 
     const options = await api.get('/api/payment-options');
     assert.ok(options.data.data.some(option => option.id === 'pay_on_site' && option.available));
     assert.ok(options.data.data.some(option => option.id === 'online' && !option.available));
 
     console.log('Smoke tests passed: auth, tables, table sessions, QR image, menu CRUD, persisted orders, server-side prices, idempotency, order validation/status, loyalty, reservations, manual payment.');
-  } finally {
-    if (reservationId) await admin.delete(`/api/reservations/${reservationId}`);
-    if (productCreated) await admin.delete(`/api/menu/${productId}`);
-    if (tableCreated) await admin.delete(`/api/tables/${tableId}`);
-    await db.closeDatabase();
+  } catch (error) {
+    testError = error;
+  }
+
+  try {
+    if (server && server.listening) {
+      await new Promise((resolve, reject) => {
+        server.close(error => error ? reject(error) : resolve());
+      });
+    }
+  } catch (error) {
+    cleanupErrors.push(error);
+  }
+
+  try {
+    if (db) await db.closeDatabase();
+  } catch (error) {
+    cleanupErrors.push(error);
+  }
+
+  try {
+    fs.rmSync(temporaryDirectory, { recursive: true, force: true });
+  } catch (error) {
+    cleanupErrors.push(error);
+  }
+
+  if (testError && cleanupErrors.length) {
+    throw new AggregateError(
+      [testError, ...cleanupErrors],
+      `Smoke test failed: ${testError.message}; cleanup failed: ${cleanupErrors.map(error => error.message).join('; ')}`
+    );
+  }
+  if (testError) throw testError;
+  if (cleanupErrors.length) {
+    throw new AggregateError(cleanupErrors, `Smoke test cleanup failed: ${cleanupErrors.map(error => error.message).join('; ')}`);
   }
 }
 
