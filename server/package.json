@@ -9,7 +9,8 @@
     "start:dev": "node --watch index.js",
     "backup": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/backup-db.ps1 -IntervalHours 24",
     "migrate:sqlite": "node ./scripts/migrate-to-sqlite.js",
-    "smoke": "node ./scripts/smoke-test.js"
+    "smoke": "node ./scripts/smoke-test.js",
+    "test:postgres:integration": "node ./scripts/postgres-integration-test.js"
   },
   "author": "",
   "engines": {

@@ -1,13 +1,128 @@
 const crypto = require('crypto');
 const { Pool } = require('pg');
+const { isPostgresIntegrationRequested } = require('./postgres-integration-mode');
 
-let pool = process.env.DATABASE_URL ? new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.PGSSLMODE === 'require' ? { rejectUnauthorized: true } : undefined,
-  max: 10,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 10000
-}) : null;
+const INTEGRATION_SCHEMA_PATTERN = /^wassa_integration_test_[a-f0-9]{32}$/;
+const PRODUCTION_ENDPOINT_UNAVAILABLE_CONFIRMATION = 'site-not-deployed-no-production-postgres';
+const RENDER_HOST_PATTERN =
+  /^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+render\.com$/i;
+
+function parseIntegrationEndpoint(value) {
+  if (typeof value !== 'string' || !value.trim()) {
+    throw new Error('A PostgreSQL integration endpoint is required.');
+  }
+  let parsed;
+  try {
+    parsed = new URL(`postgres://${value.trim()}/`);
+  } catch {
+    throw new Error('A PostgreSQL integration endpoint is malformed.');
+  }
+  if (
+    parsed.username ||
+    parsed.password ||
+    parsed.pathname !== '/' ||
+    parsed.search ||
+    parsed.hash ||
+    !parsed.port ||
+    !RENDER_HOST_PATTERN.test(parsed.hostname)
+  ) {
+    throw new Error('A PostgreSQL integration endpoint must be an explicit Render host and port.');
+  }
+  return `${parsed.hostname.toLowerCase()}:${parsed.port}`;
+}
+
+function createPoolConfig(environment = process.env) {
+  const integrationRequested = isPostgresIntegrationRequested(environment);
+  const connectionString = environment.DATABASE_URL;
+  const integrationSchema = environment.WASSA_PG_INTEGRATION_SCHEMA;
+  if (!integrationRequested) {
+    if (!connectionString) return null;
+    return {
+      connectionString,
+      ssl: environment.PGSSLMODE === 'require' ? { rejectUnauthorized: true } : undefined,
+      max: 10,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 10000
+    };
+  }
+
+  if (!connectionString || !integrationSchema) {
+    throw new Error('Refusing incomplete PostgreSQL integration mode: database URL and dedicated schema are required.');
+  }
+
+  if (
+    environment.WASSA_PG_INTEGRATION_MODE !== '1' ||
+    environment.NODE_ENV !== 'test' ||
+    integrationSchema === 'public' ||
+    !INTEGRATION_SCHEMA_PATTERN.test(integrationSchema) ||
+    environment.PGSSLMODE !== 'require' ||
+    environment.WASSA_PG_TEST_CONFIRM !== 'lewassa-is-not-production' ||
+    [
+      'TEST_DATABASE_URL',
+      'PGHOST',
+      'PGHOSTADDR',
+      'PGPORT',
+      'PGDATABASE',
+      'PGUSER',
+      'PGPASSWORD',
+      'PGSERVICE',
+      'PGSERVICEFILE',
+      'PGOPTIONS'
+    ].some(key => environment[key])
+  ) {
+    throw new Error('Refusing unsafe PostgreSQL integration schema or environment configuration.');
+  }
+
+  let target;
+  try {
+    target = new URL(connectionString);
+  } catch {
+    throw new Error('The PostgreSQL integration connection string is malformed.');
+  }
+
+  const host = target.hostname.toLowerCase();
+  const endpoint = `${host}:${target.port || '5432'}`;
+  const allowedEndpoint = parseIntegrationEndpoint(environment.WASSA_PG_TEST_ALLOWED_ENDPOINT);
+  const configuredProductionEndpoint = environment.WASSA_PG_PRODUCTION_ENDPOINT;
+  const productionUnavailableConfirmation =
+    environment.WASSA_PG_PRODUCTION_ENDPOINT_UNAVAILABLE;
+  let productionEndpoint = null;
+  if (typeof configuredProductionEndpoint === 'string' && configuredProductionEndpoint.trim()) {
+    if (productionUnavailableConfirmation) {
+      throw new Error('Production endpoint and its unavailability confirmation cannot both be configured.');
+    }
+    productionEndpoint = parseIntegrationEndpoint(configuredProductionEndpoint);
+  } else if (productionUnavailableConfirmation !== PRODUCTION_ENDPOINT_UNAVAILABLE_CONFIRMATION) {
+    throw new Error('A production endpoint or its explicit absence confirmation is required.');
+  }
+
+  if (
+    !['postgres:', 'postgresql:'].includes(target.protocol) ||
+    target.pathname !== '/lewassa' ||
+    target.search ||
+    target.hash ||
+    !target.username ||
+    !target.password ||
+    !RENDER_HOST_PATTERN.test(host) ||
+    environment.WASSA_PG_INTEGRATION_HOST !== host ||
+    endpoint !== allowedEndpoint ||
+    endpoint === productionEndpoint
+  ) {
+    throw new Error('Refusing PostgreSQL integration pool target or connection options.');
+  }
+
+  return {
+    connectionString,
+    ssl: { rejectUnauthorized: true, servername: host },
+    options: `-c search_path=${integrationSchema}`,
+    max: 10,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 10000
+  };
+}
+
+const poolConfig = createPoolConfig();
+let pool = poolConfig ? new Pool(poolConfig) : null;
 
 function safeJsonParse(value) {
   if (value == null) return [];
@@ -65,6 +180,17 @@ function getDatabaseType() {
 
 async function ensureDatabase() {
   await ensurePool();
+  if (process.env.WASSA_PG_INTEGRATION_SCHEMA) {
+    const result = await pool.query(
+      'SELECT current_database() AS database_name, current_schema() AS schema_name'
+    );
+    if (
+      result.rows[0].database_name !== 'lewassa' ||
+      result.rows[0].schema_name !== process.env.WASSA_PG_INTEGRATION_SCHEMA
+    ) {
+      throw new Error('Refusing to initialize PostgreSQL outside the dedicated integration schema.');
+    }
+  }
   await pool.query(`
     CREATE TABLE IF NOT EXISTS products (
       id TEXT PRIMARY KEY,
@@ -524,6 +650,7 @@ async function closeDatabase() {
 }
 
 module.exports = {
+  createPoolConfig,
   ensureDatabase,
   ensureTable: ensureDatabase,
   closeDatabase,
